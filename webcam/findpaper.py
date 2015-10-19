@@ -90,7 +90,7 @@ def skeletonize(img):
 
 # Parameter specifies which webcam to use. See order in e.g. Photo Booth's
 # Camera menu.
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(1)
 
 while(True):
   # Capture frame-by-frame
