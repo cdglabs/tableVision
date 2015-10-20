@@ -50,7 +50,7 @@ def extractPaper(img, paper):
   # us letter: 8.5 by 11
   source = np.array([[0,850], [1100,850], [1100,0], [0,0]], np.float32)
   transformMatrix = cv2.getPerspectiveTransform(paper, source)
-  transformed = cv2.warpPerspective(frame, transformMatrix, (1100, 850))
+  transformed = cv2.warpPerspective(img, transformMatrix, (1100, 850))
   return transformed
 
 
@@ -88,36 +88,24 @@ def skeletonize(img):
 
 
 
-# Parameter specifies which webcam to use. See order in e.g. Photo Booth's
-# Camera menu.
-cap = cv2.VideoCapture(2)
-
-while(True):
-  # Capture frame-by-frame
-  junk, frame = cap.read()
-
-  edges = findEdges(frame)
-  # cv2.imshow("out", edges)
-
-  paper = findPaper(edges)
-  # out = frame.copy()
-  # cv2.drawContours(out, [paper], -1, (0,0,255), 2)
-  # cv2.imshow("out", out)
-
-  extracted = extractPaper(frame, paper)
-  # cv2.imshow("out", extracted)
-
-  ink = binarizeInk(extracted)
-  # cv2.imshow("out", ink)
-
-  skeleton = skeletonize(ink)
-  cv2.imshow("out", skeleton)
 
 
+img = cv2.imread('sample1.jpg')
 
-  if cv2.waitKey(1) & 0xFF == ord('q'):
-    break
+edges = findEdges(img)
+cv2.imwrite("out1.png", edges)
 
-# When everything done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+paper = findPaper(edges)
+out = img.copy()
+cv2.drawContours(out, [paper], -1, (0,0,255), 2)
+cv2.imwrite("out2.png", out)
+
+extracted = extractPaper(img, paper)
+cv2.imwrite("out3.png", extracted)
+
+ink = binarizeInk(extracted)
+cv2.imwrite("out4.png", ink)
+
+skeleton = skeletonize(ink)
+cv2.imwrite("out5.png", skeleton)
+
