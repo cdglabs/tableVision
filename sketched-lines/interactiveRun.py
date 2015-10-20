@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 useLiveVideo=False
-runInteractive=True
+runInteractive=False
 moduleToRun=None
 methodNameToRun = "withImage"
 frame=None
@@ -36,6 +36,7 @@ def runOnce(moduleToRun):
 		#~ pass
 		raise
 	
+
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		return True #break
 
@@ -59,6 +60,8 @@ def main():
 	else:
 		runOnce(moduleToRun)
 	
+	if not runInteractive:
+		cv2.waitKey(0)
 	if useLiveVideo:
 		capture.release()
 	cv2.destroyAllWindows()
