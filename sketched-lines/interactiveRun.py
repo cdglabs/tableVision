@@ -1,31 +1,13 @@
 import cv2
 import numpy as np
 import sys
-import subprocess
 
-useLiveVideo=True
+useLiveVideo=False
 runInteractive=True
 moduleToRun=None
 methodNameToRun = "withImage"
 frame=None
 capture=None
-
-def getFreeFilename():
-	filenameNumber = 1
-	getFilename = lambda: os.getcwd()+"/"+"photo"+str(filenameNumber).zfill(3)+".jpg"
-	while os.path.isfile(getFilename()):
-		filenameNumber += 1
-	return getFilename()
-
-def takeNewPhotoFromCamera():
-	file=getFreeFilename()
-	print "trying to capture: "+file
-	bashCommand = "gphoto2 --capture-image-and-download --filename="+file
-	process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-	bashOut = process.communicate()[0]
-	print bashOut
-	assert os.path.isfile(file)
-	return file
 
 def setUpModuleToBeRun():
 	assert len(sys.argv) > 1, "first command line argument must be module name to run"
@@ -78,9 +60,7 @@ def main():
 		runOnce(moduleToRun)
 	
 	if useLiveVideo:
-		cap.release()
-	else:
-		cv2.waitKey(0)
+		capture.release()
 	cv2.destroyAllWindows()
 
 main()
