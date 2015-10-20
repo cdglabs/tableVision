@@ -23,13 +23,15 @@ def takeNewPhotoFromCamera():
 	assert os.path.isfile(file)
 	return file
 
-img = cv2.imread(takeNewPhotoFromCamera())
-#~ img = cv2.imread("photo001.jpg")
+def showImage(file):
+	img = cv2.imread(takeNewPhotoFromCamera())
+	#~ img = cv2.imread("photo001.jpg")
+	winName = "image"
+	cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
+	#~ cv2.resizeWindow(winName, 900, 600)
+	#~ cv2.moveWindow(winName, 100, 100)
+	cv2.imshow(winName, img)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
-winName = "image"
-cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
-#~ cv2.resizeWindow(winName, 900, 600)
-#~ cv2.moveWindow(winName, 100, 100)
-cv2.imshow(winName, img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+takeNewPhotoFromCamera()
