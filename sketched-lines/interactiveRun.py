@@ -2,29 +2,65 @@ import cv2
 import numpy as np
 import sys
 
-assert len(sys.argv) > 1, "first command line argument must be module name to run"
-print "running: "+sys.argv[1]
-moduleToRun = __import__(sys.argv[1])
+useLiveVideo=False
+runInteractive=True
+moduleToRun=None
 methodNameToRun = "withImage"
-assert hasattr(moduleToRun, methodNameToRun), "module has to have "+methodNameToRun+" method"
+frame=None
+capture=None
 
-cap = cv2.VideoCapture(1)
+def setUpModuleToBeRun():
+	assert len(sys.argv) > 1, "first command line argument must be module name to run"
+	print "running: "+sys.argv[1]
+	moduleToRun = __import__(sys.argv[1])
+	assert hasattr(moduleToRun, methodNameToRun), "module has to have "+methodNameToRun+" method"
+	return moduleToRun
 
-while(True):
+def runOnce(moduleToRun):
+	global frame, methodNameToRun, capture
 	try:
-		# watch file changes for interactive workflow
 		moduleToRun = reload(moduleToRun)
-		ret, frame = cap.read()
-		#result = moduleToRun.withImage(frame)
+		if useLiveVideo:
+			ret, frame = capture.read()
 		result = getattr(moduleToRun, methodNameToRun)(frame)
+		if isinstance(result, list):
+			for i in range(len(result)):
+				windowName = 'frame'+str(i)
+				cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
+				#cv2.resizeWindow(windowName, 900, 600)
+				#cv2.moveWindow(windowName, 100, 100)
+				cv2.imshow(windowName, result[i])
+		else:
+			cv2.imshow('frame', result)
 	except:
-		pass
+		#~ pass
+		raise
 	
-	cv2.imshow('frame', result)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
+		return True #break
 
-cap.release()
-#cv2.imshow('image', red_hue_image)
-#cv2.waitKey(0)
-cv2.destroyAllWindows()
+def main():
+	global frame, capture
+	moduleToRun = setUpModuleToBeRun()
+	
+	if useLiveVideo:
+		capture = cv2.VideoCapture(0)
+		# resolution
+		capture.set(3, 1920)
+		capture.set(4, 1080)
+	else:
+		frame = cv2.imread("photo001.jpg")
+	
+	if runInteractive:
+		moduleToRun = reload(moduleToRun)
+		while(True):
+			if runOnce(moduleToRun) == True:
+				break
+	else:
+		runOnce(moduleToRun)
+	
+	if useLiveVideo:
+		capture.release()
+	cv2.destroyAllWindows()
+
+main()
