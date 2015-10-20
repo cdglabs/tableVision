@@ -9,22 +9,30 @@ methodNameToRun = "withImage"
 assert hasattr(moduleToRun, methodNameToRun), "module has to have "+methodNameToRun+" method"
 
 cap = cv2.VideoCapture(1)
+# resolution
+cap.set(3, 1920)
+cap.set(4, 1080)
+
+moduleToRun = reload(moduleToRun)
 
 while(True):
 	try:
-		# watch file changes for interactive workflow
 		moduleToRun = reload(moduleToRun)
 		ret, frame = cap.read()
-		#result = moduleToRun.withImage(frame)
 		result = getattr(moduleToRun, methodNameToRun)(frame)
+		if isinstance(result, list):
+			for i in range(len(result)):
+				windowName = 'frame'+str(i)
+				cv2.imshow(windowName, result[i])
+				#cv2.moveWindow(windowName, 100, 100)
+		else:
+			cv2.imshow('frame', result)
 	except:
-		pass
+		#~ pass
+		raise
 	
-	cv2.imshow('frame', result)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 
 cap.release()
-#cv2.imshow('image', red_hue_image)
-#cv2.waitKey(0)
 cv2.destroyAllWindows()
