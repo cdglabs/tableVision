@@ -50,7 +50,7 @@ def extractPaper(img, paper):
   # us letter: 8.5 by 11
   source = np.array([[0,850], [1100,850], [1100,0], [0,0]], np.float32)
   transformMatrix = cv2.getPerspectiveTransform(paper, source)
-  transformed = cv2.warpPerspective(frame, transformMatrix, (1100, 850))
+  transformed = cv2.warpPerspective(img, transformMatrix, (1100, 850))
   return transformed
 
 
