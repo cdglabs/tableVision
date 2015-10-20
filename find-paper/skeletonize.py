@@ -88,24 +88,36 @@ def skeletonize(img):
 
 
 
+# Parameter specifies which webcam to use. See order in e.g. Photo Booth's
+# Camera menu.
+cap = cv2.VideoCapture(1)
+
+while(True):
+  # Capture frame-by-frame
+  junk, frame = cap.read()
+
+  edges = findEdges(frame)
+  # cv2.imshow("out", edges)
+
+  paper = findPaper(edges)
+  # out = frame.copy()
+  # cv2.drawContours(out, [paper], -1, (0,0,255), 2)
+  # cv2.imshow("out", out)
+
+  extracted = extractPaper(frame, paper)
+  # cv2.imshow("out", extracted)
+
+  ink = binarizeInk(extracted)
+  # cv2.imshow("out", ink)
+
+  skeleton = skeletonize(ink)
+  cv2.imshow("out", skeleton)
 
 
-img = cv2.imread('sample1.jpg')
 
-edges = findEdges(img)
-cv2.imwrite("out1.png", edges)
+  if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
 
-paper = findPaper(edges)
-out = img.copy()
-cv2.drawContours(out, [paper], -1, (0,0,255), 2)
-cv2.imwrite("out2.png", out)
-
-extracted = extractPaper(img, paper)
-cv2.imwrite("out3.png", extracted)
-
-ink = binarizeInk(extracted)
-cv2.imwrite("out4.png", ink)
-
-skeleton = skeletonize(ink)
-cv2.imwrite("out5.png", skeleton)
-
+# When everything done, release the capture
+cap.release()
+cv2.destroyAllWindows()

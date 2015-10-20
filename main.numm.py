@@ -30,7 +30,7 @@ def video_out(a):
 	a[10:30,10:30,] = 0 # black square
 	frame = gen.next()
 	#print frame.shape
-	kernel = np.ones((7,7), np.uint8)
+	kernel = np.ones((6,6), np.uint8)
 	
 	erosion = cv2.erode(frame, kernel, iterations = 1)
 	render4(a, erosion)
@@ -49,14 +49,18 @@ def video_out(a):
 	render4(a, th2)
 	
 	#cv2.findContours(th2, mode, method[, contours[, hierarchy[, offset]]]) → contours, hierarchy
+	#cvDrawContours( IplImage, contours, color, color, -1, CV_FILLED, 8 );
 	contours, hierarchy = cv2.findContours(th2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	maxContour = max(contours, key=lambda contour: cv2.contourArea(contour))
+	# HINT: cv2.contourArea(contour) does NOT compute area of CONTENT of contour, but the contour itself
+	# get perimeter instead
+	maxContour = max(contours, key=lambda contour: cv2.arcLength(contour, True))
 	cv2.drawContours(frame, [maxContour], -1, (0,255,0), 3)
 	render4(a, frame)
 	
 	#approximate contour with accuracy proportional to the contour perimeter
-	epsilon = cv2.arcLength(maxContour, True)*0.02
+	epsilon = cv2.arcLength(maxContour, True)*0.05
 	ap = cv2.approxPolyDP(maxContour, epsilon, True)
+	# ISSUE: ap needs 4 points!
 	#figure out the orientation of the contour to match horizontal orientation
 	dist01 = np.linalg.norm(ap[0] - ap[1])
 	#dist02 = np.linalg.norm(ap[0] - ap[2]) #diagonal
