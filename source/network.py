@@ -3,7 +3,7 @@ import cv2
 from skimage import morphology
 import networkx as nx
 import itertools
-from rdp import rdp
+from rdp import *
 import math
 
 

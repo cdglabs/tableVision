@@ -62,7 +62,7 @@ def main():
 		capture.set(3, 1920)
 		capture.set(4, 1080)
 	else:
-		frame = cv2.imread("photo007.jpg")
+		frame = cv2.imread("input/photo002.jpg")
 	
 	if runInteractive:
 		moduleToRun = reload(moduleToRun)

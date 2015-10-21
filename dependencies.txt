@@ -1,0 +1,2 @@
+python-networkx-core
+gphoto2
