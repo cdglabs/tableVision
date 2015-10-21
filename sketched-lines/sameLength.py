@@ -15,7 +15,7 @@ def whiteBalance(img):
 	(r, g, b) = (r/len(brigthest), g/len(brigthest), b/len(brigthest))
 	average = (r+g+b)/3
 	(dr, dg, db) = (r-average, g-average, b-average)
-	print (dr, dg, db)
+	#~ print (dr, dg, db)
 	# avert overflow of uint8 [0,255]
 	img[:,:,:] *= (255-max(dr, dg, db))/255.0
 	img[:,:,:] += max(dr, dg, db)
@@ -26,43 +26,28 @@ def whiteBalance(img):
 
 # img is a raw color image. findEdges returns a binary image where white is edge.
 def findEdges(img):
+	img = cv2.medianBlur(img, 15)
 	kernel = np.ones((5,5), np.uint8)
 	erosion = cv2.erode(img, kernel, iterations=1)
 	dilation = cv2.dilate(img, kernel, iterations=1)
 	difference = dilation - erosion
 	grey = cv2.cvtColor(difference, cv2.COLOR_BGR2GRAY)
-	(_, binarized) = cv2.threshold(grey, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+	# cv2.adaptiveThreshold(src, maxValue, adaptiveMethod, thresholdType, blockSize, C)
+	binarized = cv2.adaptiveThreshold(grey, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 7, 0)
 	return binarized
 
 # img should be a binary image showing edges. findPaper returns a contour with
 # 4 points that is the outline of the paper.
 def findPaper(img):
 	(contours, _) = cv2.findContours(img.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	contours = sorted(contours, key = cv2.contourArea, reverse = True)
-
-	# loop over the contours
-	for contour in contours:
+	boundingBoxes = map(lambda contour: (contour, cv2.boundingRect(contour)), contours)
+	sortedC = sorted(boundingBoxes, key=lambda (contour, (x,y,w,h)): w*h, reverse=True)
+	
+	# should be the first...
+	for (contour, bb) in sortedC:
 		# approximate the contour
 		perimeter = cv2.arcLength(contour, True)
 		approx = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
-
-		# if our approximated contour has four points, then we
-		# can assume that we have found our paper
-		if len(approx) == 4:
-			return approx
-
-# img should be a binary image showing edges. findPaper returns a contour with
-# 4 points that is the outline of the paper.
-def findPaper(img):
-	(contours, _) = cv2.findContours(img.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	contours = sorted(contours, key=lambda contour: cv2.arcLength(contour, True), reverse = True)
-
-	# loop over the contours
-	for contour in contours:
-		# approximate the contour
-		perimeter = cv2.arcLength(contour, True)
-		approx = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
-
 		# if our approximated contour has four points, then we
 		# can assume that we have found our paper
 		if len(approx) == 4:
@@ -84,18 +69,18 @@ def extractPaper(img, paper):
 	transformMatrix = cv2.getPerspectiveTransform(paper, source)
 	transformed = cv2.warpPerspective(img, transformMatrix, (1100, 850))
 	return transformed
-  
 
 def withImage(img):
 	imgCopy = img.copy()
 	
 	edges = findEdges(img)
 	paper = findPaper(edges)
+	
 	extracted = extractPaper(img, paper)
 	extractedCopy = extracted.copy()
 	
 	whiteBalancedImage = whiteBalance(extracted)
-	hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	hsv_image = cv2.cvtColor(whiteBalancedImage, cv2.COLOR_BGR2HSV)
 	
 	# TODO: connect red component paths / find crossings
 	#~ Threshold the HSV image, keep only the red pixels
@@ -105,4 +90,4 @@ def withImage(img):
 	upper_red_hue_range = cv2.inRange(hsv_image, (160, 190, 50), (179, 255, 255))
 	red_hue_image = cv2.addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0)
 	
-	return [imgCopy, extractedCopy, whiteBalancedImage]
+	return [imgCopy, extractedCopy, whiteBalancedImage, red_hue_image]

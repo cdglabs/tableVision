@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
 import sys
+import math
 
 useLiveVideo=False
-runInteractive=False
+runInteractive=True
 moduleToRun=None
 methodNameToRun = "withImage"
 frame=None
 capture=None
+firstRun=True
 
 def setUpModuleToBeRun():
 	assert len(sys.argv) > 1, "first command line argument must be module name to run"
@@ -17,26 +19,36 @@ def setUpModuleToBeRun():
 	return moduleToRun
 
 def runOnce(moduleToRun):
-	global frame, methodNameToRun, capture
+	global frame, methodNameToRun, capture, firstRun
 	try:
 		moduleToRun = reload(moduleToRun)
 		if useLiveVideo:
 			ret, frame = capture.read()
 		result = getattr(moduleToRun, methodNameToRun)(frame)
-		if isinstance(result, list):
-			for i in range(len(result)):
-				windowName = 'frame'+str(i)
-				cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
-				#cv2.resizeWindow(windowName, 900, 600)
-				#cv2.moveWindow(windowName, 100, 100)
-				cv2.imshow(windowName, result[i])
-		else:
-			cv2.imshow('frame', result)
+		
+		if not isinstance(result, list):
+			result = [result]
+		size = len(result)
+		matrixDim = int(math.ceil(math.sqrt(size)))
+		totalWidth=1920
+		totalHeight=1080
+		winWidth=totalWidth/matrixDim
+		winHeight=totalHeight/matrixDim
+		for i in range(size):
+			x = i % matrixDim
+			y = i / matrixDim
+			windowName = 'frame '+str(i)
+			cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
+			if firstRun: # let the user move windows around in a custom fashion
+				cv2.resizeWindow(windowName, winWidth, winHeight)
+				cv2.moveWindow(windowName, x*winWidth, y*winHeight)
+			cv2.imshow(windowName, result[i])
 	except:
 		#~ pass
 		raise
 	
-
+	if firstRun:
+		firstRun=False
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		return True #break
 
@@ -50,7 +62,7 @@ def main():
 		capture.set(3, 1920)
 		capture.set(4, 1080)
 	else:
-		frame = cv2.imread("photo001.jpg")
+		frame = cv2.imread("photo007.jpg")
 	
 	if runInteractive:
 		moduleToRun = reload(moduleToRun)
