@@ -1,3 +1,7 @@
+# Dynamic Drafting Paper
+
+![Horizontal/Vertical Lines Test](doc/hv_lines.jpg)
+
 # Dependencies
 
 Python libraries to install:
@@ -52,6 +56,6 @@ Each pipeline module must contain at least these two functions:
 
 ## Logging
 
-In order to visualize pipeline execution, pipeline `run` functions should make calls to `infrastructure.log`, in particular `infrastructure.log.image(...)`.
+In order to visualize pipeline execution, pipeline `run` functions should make calls to `infrastructure.log.image(...)`.
 
-By default, logging calls will output files in the `log/` directory. However, this behavior can be changed, e.g. to a live view (TODO).
+If the runner is in file mode, calls to `log` will output files to the `log/` directory. In watch mode, calls to `log.image(...)` will show logged images in a window (TODO).
