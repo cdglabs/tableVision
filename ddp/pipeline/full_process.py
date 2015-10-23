@@ -8,15 +8,9 @@ from pipeline.hv_lines import run as hv_lines
 
 
 def run(img):
-    img = extract_paper(img)
-    graph = sketch_graph(img)
-    graph = hv_lines(graph)
-
-    log.image(
-        background=img,
-        points=graph.nodes(),
-        lines=graph.edges()
-    )
+    extracted = extract_paper(img)
+    graph = sketch_graph(extracted)
+    graph = hv_lines(graph, background=extracted)
 
     svg = printer.graph_to_svg(graph)
     printer.write_file("log/out.svg", svg)

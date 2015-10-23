@@ -35,7 +35,7 @@ def generate_file_name(file_extension):
 
 
 
-def image(background=None, width=800, height=600, contours=[], points=[], lines=[]):
+def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[]):
     if background is None:
         img = np.zeros((height,width,3), np.uint8)
     elif len(background.shape) == 2:
@@ -44,6 +44,8 @@ def image(background=None, width=800, height=600, contours=[], points=[], lines=
         img = background.copy()
 
     cv2.drawContours(img, contours, -1, (0,100,255), 2)
+    for (x,y) in pixels:
+        img[y,x] = [100,0,255]
     for (p1, p2) in lines:
         cv2.line(img, p1, p2, (0,255,0), 2)
     for point in points:

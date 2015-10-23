@@ -14,8 +14,8 @@ def run(img):
 
     graph = topology.produce_graph(skeleton)
     log.image(
-        background=skeleton,
-        points=(node for node in graph.nodes() if graph.degree(node) != 2)
+        background=img,
+        pixels=graph.nodes()
     )
     log.gpickle(graph)
 
