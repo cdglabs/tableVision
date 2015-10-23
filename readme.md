@@ -33,12 +33,20 @@ Run a pipeline with, e.g.
 
 `ddp/infrastructure/`. Code for interfacing with the outside world.
 
-`ddp/pipeline/`. Pipelines of functions for performing particular tasks. Each pipeline module must contain a `run` function which takes an input and returns an output. It should also contain a `sample` function which returns a sample input that can be run through the pipeline (that is, `run(sample())` should work).
+`ddp/pipeline/`. Pipelines of functions for performing particular tasks.
 
 `ddp/__main__.py`. This is the "runner" that runs pipelines in various ways.
 
+`input/`. Sample input images and data for running through pipelines.
 
-# Logging
+`log/`. Images and data from a pipeline run will be written here when a pipeline is run with file logging.
+
+
+# Pipelines
+
+Each pipeline module must contain a `run` function which takes an input and returns an output. It should also contain a `sample` function which returns a sample input that can be run through the pipeline (that is, `run(sample())` should work).
+
+## Logging
 
 In order to visualize pipeline execution, pipeline `run` functions should make calls to `infrastructure.log`, in particular `infrastructure.log.image(...)`.
 
