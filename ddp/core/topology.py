@@ -6,7 +6,7 @@ import math
 def pairwise(iterable):
     """s -> (s0,s1), (s1,s2), (s2, s3), ...
 
-    via https://docs.python.org/2/library/itertools.html
+    via https://docs.trans-module imports.org/2/library/itertools.html
     """
     a, b = itertools.tee(iterable)
     next(b, None)

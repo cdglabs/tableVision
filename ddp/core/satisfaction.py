@@ -54,11 +54,3 @@ def align_vertical(graph):
 def align(graph):
     return align_vertical(align_horizontal(graph))
 
-
-def align_out(graph, original_img):
-    out = original_img.copy()
-    for (p1, p2) in graph.edges_iter():
-        cv2.line(out, p1, p2, (0, 255, 0), 2)
-    for node in graph.nodes_iter():
-        cv2.circle(out, node, 4, (0, 0, 255), -1)
-    return out

@@ -48,17 +48,69 @@ TODO: command line options...
 import sys
 import importlib
 import infrastructure.log as log
+import cv2
 
 
-assert len(sys.argv) > 1, "First command line argument must be a pipeline name to run"
+# constants
+use_live_video = True
+run_interactive = True
+method_name_to_run = "run"
 
-pipeline_name = sys.argv[1]
-pipeline = importlib.import_module("pipeline." + pipeline_name)
+# variables
+frame = None
+capture = None
+pipeline_name = None
 
-# TODO: Implement webcam, url, and image options.
-pipeline_input = pipeline.sample()
 
-# TODO: Implement logging options besides file output.
-log.clear_log_directory()
-log.set_file_prefix(pipeline_name)
-pipeline.run(pipeline_input)
+def run_once(module_to_run, log):
+    global frame, method_name_to_run, capture
+    module_to_run = reload(module_to_run)
+    if use_live_video:
+        _, frame = capture.read()
+    getattr(module_to_run, method_name_to_run)(frame)
+
+    log.finish_log_cycle()
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        return True  # break
+
+
+def main():
+    global frame, capture, pipeline_name
+    assert len(sys.argv) > 1, "First command line argument must be a pipeline name to run"
+
+    pipeline_name = sys.argv[1]
+    pipeline = importlib.import_module("pipeline." + pipeline_name)
+    assert hasattr(pipeline, method_name_to_run), "module has to have "+method_name_to_run+" method"
+
+    # TODO: Implement logging options besides file output.
+    # TODO: Implement webcam, url, and image options.
+    log.clear_log_directory()
+    log.set_file_prefix(pipeline_name)
+    log.set_method("stream")
+
+    if use_live_video:
+        capture = cv2.VideoCapture(1)
+        # resolution
+        capture.set(3, 1920)
+        capture.set(4, 1080)
+    else:
+        frame = pipeline.sample()
+
+    if run_interactive:
+        pipeline = reload(pipeline)
+        while True:
+            if run_once(pipeline, log):
+                break
+
+    else:
+        run_once(pipeline, log)
+
+    if not run_interactive:
+        cv2.waitKey(0)
+    if use_live_video:
+        capture.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()

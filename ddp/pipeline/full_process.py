@@ -19,8 +19,8 @@ def run(img):
     )
 
     svg = printer.graph_to_svg(graph)
-    printer.write_file("log/out.svg", svg)
-    printer.svg_to_pdf("log/out.svg", "log/out.pdf")
+    # printer.write_file("log/out.svg", svg)
+    # printer.svg_to_pdf("log/out.svg", "log/out.pdf")
     # printer.print_pdf("log/out.pdf")
 
 
