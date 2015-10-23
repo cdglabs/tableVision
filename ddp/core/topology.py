@@ -197,6 +197,13 @@ def simplify_paths(graph, epsilon):
     """Finds all paths and simplifies them using the RDP algorithm for
     reducing the number of points on a curve. All remaining nodes will be
     within epsilon of the original curve."""
+
+    # TODO: Should also simplify cyclical paths. See find_paths. A robust way
+    # to deal with cycles might be to use the potrace algorithm instead of
+    # RDP.
+
+    # http://potrace.sourceforge.net/potrace.pdf
+
     graph = graph.copy()
     paths = find_paths(graph)
     for path in paths:
