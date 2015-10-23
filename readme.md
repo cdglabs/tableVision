@@ -20,20 +20,20 @@ Run a pipeline with, e.g.
 
     python ddp cv
 
-(TODO: More command line options.)
+Check out `ddp/__main__.py` for command line options.
 
 
 # Code Organization
 
-`camera_server/`. Code that runs on the computer with the camera. Creates a webserver that anyone can query for the current picture. (TODO)
+`camera_server/`. Code that runs on the computer with the camera. Creates a web server that one can query for the current picture. (TODO)
 
-`ddp/`. The code for doing dynamic drafting paper (ddp).
+`ddp/`. The codebase for doing *dynamic drafting paper* (ddp).
 
-`ddp/core/`. All the core logic. A bunch of functions for processing images, graphs, etc.
+`ddp/core/`. All the core logic. A bunch of functions for processing images, graphs, constraint networks, etc.
 
 `ddp/infrastructure/`. Code for interfacing with the outside world.
 
-`ddp/pipeline/`. Pipelines of functions for performing particular tasks.
+`ddp/pipeline/`. Pipelines for performing particular tasks. These chain together the functions from `ddp/core/`.
 
 `ddp/__main__.py`. This is the "runner" that runs pipelines in various ways.
 
@@ -44,7 +44,11 @@ Run a pipeline with, e.g.
 
 # Pipelines
 
-Each pipeline module must contain a `run` function which takes an input and returns an output. It should also contain a `sample` function which returns a sample input that can be run through the pipeline (that is, `run(sample())` should work).
+Each pipeline module must contain at least these two functions:
+
+1. `run(input_data)`. The main pipeline function. Should make copious calls to `infrastructure.log`.
+
+2. `sample()`. Returns a sample input that can be run through the pipeline. That is, `run(sample())` should be a typical run for the pipeline.
 
 ## Logging
 
