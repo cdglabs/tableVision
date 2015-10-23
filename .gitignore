@@ -1,3 +1,4 @@
 workbench/
 .DS_Store
 *.pyc
+.idea/

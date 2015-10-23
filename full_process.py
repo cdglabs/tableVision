@@ -39,7 +39,6 @@ skeleton = skeletonize(ink)
 #~ writeout(paper.skeletonize_out(skeleton))
 
 
-
 graph = network.produce_graph(skeleton)
 writeout(network.produce_graph_out(graph, extracted))
 
