@@ -19,7 +19,7 @@ def run(graph):
         lines=graph.edges()
     )
 
-    graph = topology.straighten_lines(graph, 3.1416 * .1)
+    graph = topology.hv_lines(graph)
     log.image(
         width=1100, height=800,
         points=graph.nodes(),

@@ -1,3 +1,22 @@
+"""
+Functions for creating a graph from a skeletonized image (produce_graph) and
+for simplifying graphs in various ways.
+
+Graphs are NetworkX graphs where nodes are points, represented as (x,y) pairs.
+
+Some vocabulary:
+
+A juncture is a node with less than 2 or more than 2 edges.
+
+A bridge is a node with exactly 2 edges.
+
+A clump is a set of junctures that are all close to each other.
+
+A path is a list of nodes, each one connects to the next.
+
+"""
+
+
 import networkx as nx
 import itertools
 import math
@@ -159,13 +178,14 @@ def simplify_junctures(graph, epsilon):
 
 
 def find_paths(graph):
-    """Returns a list of paths which you can think of as the "bridges" in the
-    graph. Each path is a list of nodes. The first and last node in the path
-    is a juncture, and each intermediate node in the path has two neighbors.
+    """Returns a list of paths between junctures. Each path is a list of
+    nodes. The first and last node in the path is a juncture, and each
+    intermediate node in the path is a bridge.
     """
 
     # TODO: This should also find cyclical paths, that is circular paths which
-    # are not connected to any junctures.
+    # are not connected to any junctures. Or perhaps there should be a
+    # separate function for finding cyclical paths.
 
     junctures = find_junctures(graph)
     paths = []
@@ -198,9 +218,9 @@ def simplify_paths(graph, epsilon):
     reducing the number of points on a curve. All remaining nodes will be
     within epsilon of the original curve."""
 
-    # TODO: Should also simplify cyclical paths. See find_paths. A robust way
-    # to deal with cycles might be to use the potrace algorithm instead of
-    # RDP.
+    # TODO: Should also simplify cyclical paths. See find_paths. But RDP needs
+    # endpoints. A robust way to deal with cycles might be to use the potrace
+    # algorithm instead of RDP.
 
     # http://potrace.sourceforge.net/potrace.pdf
 
@@ -218,6 +238,44 @@ def simplify_paths(graph, epsilon):
     return graph
 
 
+def is_horizontal((x1,y1), (x2,y2)):
+    """Returns True if points are more horizontal to each other than vertical
+    to each other."""
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    return dx > dy
+
+def get_bridge_ends(graph, node):
+    """Returns the nodes on either side of a bridge (a node with 2 edges)."""
+    neighbors = list(nx.all_neighbors(graph, node))
+    p1 = neighbors[0]
+    p2 = neighbors[1]
+    return (p1, p2)
+
+def remove_bridge(graph, node):
+    """Mutates graph. Assumes node is a bridge (has 2 edges). Removes bridge
+    node and connects either side of the bridge to each other."""
+    (p1, p2) = get_bridge_ends(graph, node)
+    graph.remove_node(node)
+    graph.add_edge(p1, p2)
+
+
+def hv_lines(graph):
+    """Removes any nodes of two edges that are redundant assuming the graph
+    only represents horizontal and vertical lines."""
+
+    graph = graph.copy()
+    to_delete = set([])
+    for node in graph.nodes_iter():
+        if graph.degree(node) == 2:
+            (p1, p2) = get_bridge_ends(graph, node)
+            if is_horizontal(p1, node) == is_horizontal(node, p2):
+                to_delete.add(node)
+    for node in to_delete:
+        remove_bridge(graph, node)
+    return graph
+
+
 def straighten_lines(graph, max_angle):
     """Removes any nodes of two edges that form an angle less than max_angle
     from pi radians.
@@ -229,9 +287,7 @@ def straighten_lines(graph, max_angle):
     to_delete = set([])
     for node in graph.nodes_iter():
         if nx.degree(graph, node) == 2:
-            neighbors = list(nx.all_neighbors(graph, node))
-            p1 = neighbors[0]
-            p2 = neighbors[1]
+            (p1, p2) = get_bridge_ends(graph, node)
             a = math.sqrt(quadrance(p1, node))
             b = math.sqrt(quadrance(p2, node))
             c = math.sqrt(quadrance(p1, p2))
@@ -242,9 +298,5 @@ def straighten_lines(graph, max_angle):
             if angle < max_angle:
                 to_delete.add(node)
     for node in to_delete:
-        neighbors = list(nx.all_neighbors(graph, node))
-        p1 = neighbors[0]
-        p2 = neighbors[1]
-        graph.remove_node(node)
-        graph.add_edge(p1, p2)
+        remove_bridge(graph, node)
     return graph
