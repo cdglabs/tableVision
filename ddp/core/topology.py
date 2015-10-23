@@ -14,7 +14,7 @@ def pairwise(iterable):
 
 
 def neighbor_coords(img, (x, y)):
-    """Will find up to 8 pixel neighbor coordinates of (x,y)."""
+    """Returns up to 8 pixel neighbor coordinates of (x,y)."""
     (rows, cols) = img.shape
     neighbors = []
     for i in [-1, 0, 1]:
@@ -29,7 +29,7 @@ def neighbor_coords(img, (x, y)):
 
 
 def quadrance((x1, y1), (x2, y2)):
-    """Return distance-squared between two points."""
+    """Returns distance-squared between two points."""
     dx = x2 - x1
     dy = y2 - y1
     return dx*dx + dy*dy
@@ -96,9 +96,10 @@ def produce_graph(img):
     return graph
 
 
-# Takes a graph and returns all nodes that are "junctures", that is, have less
-# than 2 or more than 2 edges.
 def find_junctures(graph):
+    """Returns all nodes that are "junctures", that is, have less than 2 or
+    more than 2 edges.
+    """
     junctures = []
     for node in nx.nodes_iter(graph):
         degree = nx.degree(graph, node)
@@ -107,10 +108,10 @@ def find_junctures(graph):
     return junctures
 
 
-# Takes a graph and a max_distance and returns a list of clumps. Each clump is
-# a set of junctures which are within max_distance of each other.
-def find_clumps(graph, max_distance):
-    max_quadrance = max_distance * max_distance
+def find_clumps(graph, epsilon):
+    """Returns a list of "clumps". Each clump is a set of junctures which are
+    within epsilon of each other."""
+    max_quadrance = epsilon * epsilon
     junctures = find_junctures(graph)
     clump_graph = nx.Graph()
     for juncture in junctures:
@@ -120,15 +121,14 @@ def find_clumps(graph, max_distance):
             clump_graph.add_edge(i, j)
     return nx.connected_components(clump_graph)
 
-# Replaces all clumps (see above) with a single juncture node. For each clump,
-# any nodes within max_distance of the clump are deleted. Remaining nodes are
-# connected back to the simplified junctures appropriately.
 
-
-def simplify_junctures(graph, max_distance):
+def simplify_junctures(graph, epsilon):
+    """Simplifies clumps by replacing them with a single juncture node. For
+    each clump, any nodes within epsilon of the clump are deleted. Remaining
+    nodes are connected back to the simplified junctures appropriately."""
     graph = graph.copy()
-    max_quadrance = max_distance * max_distance
-    clumps = find_clumps(graph, max_distance)
+    max_quadrance = epsilon * epsilon
+    clumps = find_clumps(graph, epsilon)
 
     for clump in clumps:
         to_delete = set([])
@@ -159,10 +159,15 @@ def simplify_junctures(graph, max_distance):
     return graph
 
 
-# Returns a list of paths which you can think of as the "bridges" in the
-# graph. Each path is a list of nodes. The first and last node in the path is
-# a juncture, and each intermediate node in the path has two neighbors.
 def find_paths(graph):
+    """Returns a list of paths which you can think of as the "bridges" in the
+    graph. Each path is a list of nodes. The first and last node in the path
+    is a juncture, and each intermediate node in the path has two neighbors.
+    """
+
+    # TODO: This should also find cyclical paths, that is circular paths which
+    # are not connected to any junctures.
+
     junctures = find_junctures(graph)
     paths = []
     visited_nodes = set([])
@@ -189,14 +194,14 @@ def find_paths(graph):
     return paths
 
 
-# Finds all paths and simplifies them using the RDP algorithm for reducing the
-# number of points on a curve. All remaining nodes will be within max_distance
-# of the non-simplified curve.
-def simplify_paths(graph, max_distance):
+def simplify_paths(graph, epsilon):
+    """Finds all paths and simplifies them using the RDP algorithm for
+    reducing the number of points on a curve. All remaining nodes will be
+    within epsilon of the original curve."""
     graph = graph.copy()
     paths = find_paths(graph)
     for path in paths:
-        simplified_path = rdp(path, max_distance)
+        simplified_path = rdp(path, epsilon)
         # Delete original path.
         for index, node in enumerate(path):
             if index == 0 or index == len(path)-1:
@@ -207,9 +212,13 @@ def simplify_paths(graph, max_distance):
     return graph
 
 
-# Removes any nodes of two edges that form an angle less than max_angle from
-# pi radians. TODO: This could use cleanup.
 def straighten_lines(graph, max_angle):
+    """Removes any nodes of two edges that form an angle less than max_angle
+    from pi radians.
+    """
+
+    # TODO: This could use cleanup. The formulation of max_angle is awkward.
+
     graph = graph.copy()
     to_delete = set([])
     for node in graph.nodes_iter():
