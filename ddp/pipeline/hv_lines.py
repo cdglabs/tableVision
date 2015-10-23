@@ -6,13 +6,13 @@ import core.satisfaction as satisfaction
 
 
 def run(graph):
-    graph = topology.simplify_junctures(graph, 5)
+    graph = topology.simplify_junctures(graph)
     log.image(
         width=1100, height=800,
         points=(node for node in graph.nodes() if graph.degree(node) != 2)
     )
 
-    graph = topology.simplify_paths(graph, 3)
+    graph = topology.simplify_paths(graph)
     log.image(
         width=1100, height=800,
         points=graph.nodes(),

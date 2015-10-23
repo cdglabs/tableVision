@@ -140,7 +140,7 @@ def find_clumps(graph, epsilon):
     return nx.connected_components(clump_graph)
 
 
-def simplify_junctures(graph, epsilon):
+def simplify_junctures(graph, epsilon=5):
     """Simplifies clumps by replacing them with a single juncture node. For
     each clump, any nodes within epsilon of the clump are deleted. Remaining
     nodes are connected back to the simplified junctures appropriately."""
@@ -213,7 +213,7 @@ def find_paths(graph):
     return paths
 
 
-def simplify_paths(graph, epsilon):
+def simplify_paths(graph, epsilon=3):
     """Finds all paths and simplifies them using the RDP algorithm for
     reducing the number of points on a curve. All remaining nodes will be
     within epsilon of the original curve."""
