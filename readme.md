@@ -22,7 +22,7 @@ For camera server:
 
 Run a pipeline with, e.g.
 
-    python ddp cv
+    python ddp extract_paper
 
 Check out `ddp/__main__.py` for command line options.
 
