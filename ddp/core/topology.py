@@ -13,9 +13,8 @@ def pairwise(iterable):
     return itertools.izip(a, b)
 
 
-def neighbor_coords(img, (x, y)):
+def neighbor_coords((x,y), (width,height)):
     """Returns up to 8 pixel neighbor coordinates of (x,y)."""
-    (rows, cols) = img.shape
     neighbors = []
     for i in [-1, 0, 1]:
         for j in [-1, 0, 1]:
@@ -23,12 +22,12 @@ def neighbor_coords(img, (x, y)):
                 continue
             neighbor_x = x + i
             neighbor_y = y + j
-            if 0 < neighbor_x < cols and 0 < neighbor_y < rows:
+            if 0 < neighbor_x < width and 0 < neighbor_y < height:
                 neighbors.append((neighbor_x, neighbor_y))
     return neighbors
 
 
-def quadrance((x1, y1), (x2, y2)):
+def quadrance((x1,y1), (x2,y2)):
     """Returns distance-squared between two points."""
     dx = x2 - x1
     dy = y2 - y1
@@ -89,7 +88,7 @@ def produce_graph(img):
             if pixel == 255:
                 point = (x, y)
                 graph.add_node(point)
-                for neighbor in neighbor_coords(img, point):
+                for neighbor in neighbor_coords(point, (cols, rows)):
                     neighbor_pixel = img.item(neighbor[1], neighbor[0])
                     if neighbor_pixel == 255:
                         graph.add_edge(point, neighbor)
