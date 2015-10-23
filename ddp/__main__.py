@@ -27,7 +27,7 @@ optional arguments:
 
 Examples:
 
-    python ddp cv
+    python ddp extract_paper
 
 
 Notes:

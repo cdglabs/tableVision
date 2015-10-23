@@ -14,17 +14,18 @@ _out_prefix = "out"
 _windows = []
 
 
-def image(background=None, width=800, height=600, contours=[], points=[], lines=[]):
+def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[]):
     global _out_count
     if background is None:
         img = np.zeros((height,width,3), np.uint8)
     elif len(background.shape) == 2:
         img = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
-    elif not contours or not points or not lines:
+    else:
         img = background.copy()
 
-    if contours:
-        cv2.drawContours(img, contours, -1, (0,100,255), 2)
+    cv2.drawContours(img, contours, -1, (0,100,255), 2)
+    for (x,y) in pixels:
+        img[y,x] = [100,0,255]
     for (p1, p2) in lines:
         cv2.line(img, p1, p2, (0,255,0), 2)
     for point in points:

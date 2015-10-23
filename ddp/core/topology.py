@@ -1,3 +1,22 @@
+"""
+Functions for creating a graph from a skeletonized image (produce_graph) and
+for simplifying graphs in various ways.
+
+Graphs are NetworkX graphs where nodes are points, represented as (x,y) pairs.
+
+Some vocabulary:
+
+A juncture is a node with less than 2 or more than 2 edges.
+
+A bridge is a node with exactly 2 edges.
+
+A clump is a set of junctures that are all close to each other.
+
+A path is a list of nodes, each one connects to the next.
+
+"""
+
+
 import networkx as nx
 import itertools
 import math
@@ -13,9 +32,8 @@ def pairwise(iterable):
     return itertools.izip(a, b)
 
 
-def neighbor_coords(img, (x, y)):
-    """Will find up to 8 pixel neighbor coordinates of (x,y)."""
-    (rows, cols) = img.shape
+def neighbor_coords((x,y), (width,height)):
+    """Returns up to 8 pixel neighbor coordinates of (x,y)."""
     neighbors = []
     for i in [-1, 0, 1]:
         for j in [-1, 0, 1]:
@@ -23,13 +41,13 @@ def neighbor_coords(img, (x, y)):
                 continue
             neighbor_x = x + i
             neighbor_y = y + j
-            if 0 < neighbor_x < cols and 0 < neighbor_y < rows:
+            if 0 < neighbor_x < width and 0 < neighbor_y < height:
                 neighbors.append((neighbor_x, neighbor_y))
     return neighbors
 
 
-def quadrance((x1, y1), (x2, y2)):
-    """Return distance-squared between two points."""
+def quadrance((x1,y1), (x2,y2)):
+    """Returns distance-squared between two points."""
     dx = x2 - x1
     dy = y2 - y1
     return dx*dx + dy*dy
@@ -89,16 +107,17 @@ def produce_graph(img):
             if pixel == 255:
                 point = (x, y)
                 graph.add_node(point)
-                for neighbor in neighbor_coords(img, point):
+                for neighbor in neighbor_coords(point, (cols, rows)):
                     neighbor_pixel = img.item(neighbor[1], neighbor[0])
                     if neighbor_pixel == 255:
                         graph.add_edge(point, neighbor)
     return graph
 
 
-# Takes a graph and returns all nodes that are "junctures", that is, have less
-# than 2 or more than 2 edges.
 def find_junctures(graph):
+    """Returns all nodes that are "junctures", that is, have less than 2 or
+    more than 2 edges.
+    """
     junctures = []
     for node in nx.nodes_iter(graph):
         degree = nx.degree(graph, node)
@@ -107,10 +126,10 @@ def find_junctures(graph):
     return junctures
 
 
-# Takes a graph and a max_distance and returns a list of clumps. Each clump is
-# a set of junctures which are within max_distance of each other.
-def find_clumps(graph, max_distance):
-    max_quadrance = max_distance * max_distance
+def find_clumps(graph, epsilon):
+    """Returns a list of "clumps". Each clump is a set of junctures which are
+    within epsilon of each other."""
+    max_quadrance = epsilon * epsilon
     junctures = find_junctures(graph)
     clump_graph = nx.Graph()
     for juncture in junctures:
@@ -120,15 +139,14 @@ def find_clumps(graph, max_distance):
             clump_graph.add_edge(i, j)
     return nx.connected_components(clump_graph)
 
-# Replaces all clumps (see above) with a single juncture node. For each clump,
-# any nodes within max_distance of the clump are deleted. Remaining nodes are
-# connected back to the simplified junctures appropriately.
 
-
-def simplify_junctures(graph, max_distance):
+def simplify_junctures(graph, epsilon=5):
+    """Simplifies clumps by replacing them with a single juncture node. For
+    each clump, any nodes within epsilon of the clump are deleted. Remaining
+    nodes are connected back to the simplified junctures appropriately."""
     graph = graph.copy()
-    max_quadrance = max_distance * max_distance
-    clumps = find_clumps(graph, max_distance)
+    max_quadrance = epsilon * epsilon
+    clumps = find_clumps(graph, epsilon)
 
     for clump in clumps:
         to_delete = set([])
@@ -159,10 +177,16 @@ def simplify_junctures(graph, max_distance):
     return graph
 
 
-# Returns a list of paths which you can think of as the "bridges" in the
-# graph. Each path is a list of nodes. The first and last node in the path is
-# a juncture, and each intermediate node in the path has two neighbors.
 def find_paths(graph):
+    """Returns a list of paths between junctures. Each path is a list of
+    nodes. The first and last node in the path is a juncture, and each
+    intermediate node in the path is a bridge.
+    """
+
+    # TODO: This should also find cyclical paths, that is circular paths which
+    # are not connected to any junctures. Or perhaps there should be a
+    # separate function for finding cyclical paths.
+
     junctures = find_junctures(graph)
     paths = []
     visited_nodes = set([])
@@ -189,14 +213,21 @@ def find_paths(graph):
     return paths
 
 
-# Finds all paths and simplifies them using the RDP algorithm for reducing the
-# number of points on a curve. All remaining nodes will be within max_distance
-# of the non-simplified curve.
-def simplify_paths(graph, max_distance):
+def simplify_paths(graph, epsilon=3):
+    """Finds all paths and simplifies them using the RDP algorithm for
+    reducing the number of points on a curve. All remaining nodes will be
+    within epsilon of the original curve."""
+
+    # TODO: Should also simplify cyclical paths. See find_paths. But RDP needs
+    # endpoints. A robust way to deal with cycles might be to use the potrace
+    # algorithm instead of RDP.
+
+    # http://potrace.sourceforge.net/potrace.pdf
+
     graph = graph.copy()
     paths = find_paths(graph)
     for path in paths:
-        simplified_path = rdp(path, max_distance)
+        simplified_path = rdp(path, epsilon)
         # Delete original path.
         for index, node in enumerate(path):
             if index == 0 or index == len(path)-1:
@@ -207,16 +238,56 @@ def simplify_paths(graph, max_distance):
     return graph
 
 
-# Removes any nodes of two edges that form an angle less than max_angle from
-# pi radians. TODO: This could use cleanup.
+def is_horizontal((x1,y1), (x2,y2)):
+    """Returns True if points are more horizontal to each other than vertical
+    to each other."""
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    return dx > dy
+
+def get_bridge_ends(graph, node):
+    """Returns the nodes on either side of a bridge (a node with 2 edges)."""
+    neighbors = list(nx.all_neighbors(graph, node))
+    p1 = neighbors[0]
+    p2 = neighbors[1]
+    return (p1, p2)
+
+def remove_bridge(graph, node):
+    """Mutates graph. Assumes node is a bridge (has 2 edges). Removes bridge
+    node and connects either side of the bridge to each other."""
+    (p1, p2) = get_bridge_ends(graph, node)
+    graph.remove_node(node)
+    graph.add_edge(p1, p2)
+
+
+def hv_lines(graph):
+    """Removes any nodes of two edges that are redundant assuming the graph
+    only represents horizontal and vertical lines."""
+
+    graph = graph.copy()
+    to_delete = set([])
+    for node in graph.nodes_iter():
+        if graph.degree(node) == 2:
+            (p1, p2) = get_bridge_ends(graph, node)
+            if is_horizontal(p1, node) == is_horizontal(node, p2):
+                to_delete.add(node)
+    for node in to_delete:
+        remove_bridge(graph, node)
+    return graph
+
+
 def straighten_lines(graph, max_angle):
+    """Removes any nodes of two edges that form an angle less than max_angle
+    from pi radians.
+    """
+
+    # TODO: This could use cleanup. The formulation of max_angle is awkward.
+
     graph = graph.copy()
     to_delete = set([])
     for node in graph.nodes_iter():
         if nx.degree(graph, node) == 2:
-            neighbors = list(nx.all_neighbors(graph, node))
-            p1 = neighbors[0]
-            p2 = neighbors[1]
+            (p1, p2) = get_bridge_ends(graph, node)
             a = math.sqrt(quadrance(p1, node))
             b = math.sqrt(quadrance(p2, node))
             c = math.sqrt(quadrance(p1, p2))
@@ -227,9 +298,5 @@ def straighten_lines(graph, max_angle):
             if angle < max_angle:
                 to_delete.add(node)
     for node in to_delete:
-        neighbors = list(nx.all_neighbors(graph, node))
-        p1 = neighbors[0]
-        p2 = neighbors[1]
-        graph.remove_node(node)
-        graph.add_edge(p1, p2)
+        remove_bridge(graph, node)
     return graph
