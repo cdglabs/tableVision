@@ -14,13 +14,7 @@ def run(img):
     extracted = vision.extract_paper(img, paper_contour)
     log.image(background=extracted)
 
-    ink = vision.binarize_ink(extracted)
-    log.image(background=ink)
-
-    skeleton = vision.skeletonize(ink)
-    log.image(background=skeleton)
-
-    return skeleton
+    return extracted
 
 
 def sample():
