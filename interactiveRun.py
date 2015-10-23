@@ -1,3 +1,11 @@
+# TODO: This logic should be integrated into ddp/__main__.py
+
+
+
+
+
+
+
 import cv2
 import numpy as np
 import sys
@@ -25,7 +33,7 @@ def runOnce(moduleToRun):
 		if useLiveVideo:
 			ret, frame = capture.read()
 		result = getattr(moduleToRun, methodNameToRun)(frame)
-		
+
 		if not isinstance(result, list):
 			result = [result]
 		size = len(result)
@@ -46,7 +54,7 @@ def runOnce(moduleToRun):
 	except:
 		#~ pass
 		raise
-	
+
 	if firstRun:
 		firstRun=False
 	if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -55,7 +63,7 @@ def runOnce(moduleToRun):
 def main():
 	global frame, capture
 	moduleToRun = setUpModuleToBeRun()
-	
+
 	if useLiveVideo:
 		capture = cv2.VideoCapture(0)
 		# resolution
@@ -63,7 +71,7 @@ def main():
 		capture.set(4, 1080)
 	else:
 		frame = cv2.imread("input/photo002.jpg")
-	
+
 	if runInteractive:
 		moduleToRun = reload(moduleToRun)
 		while(True):
@@ -71,7 +79,7 @@ def main():
 				break
 	else:
 		runOnce(moduleToRun)
-	
+
 	if not runInteractive:
 		cv2.waitKey(0)
 	if useLiveVideo:
