@@ -1,20 +1,3 @@
-"""
-
-I installed cairosvg to convert svg files to pdf files. Install with:
-
-    sudo pip install cairosvg
-
-This will convert an svg to pdf:
-
-    cairosvg test.svg -o test.pdf -d 100
-
-Then this will print a pdf:
-
-    lpr -P HP_LaserJet_200_colorMFP_M276nw__4EADB6_ test.pdf
-
-
-"""
-
 import subprocess
 import cairosvg
 
@@ -36,8 +19,7 @@ def write_file(file_name, contents):
 
 
 def svg_to_pdf(svg_file_name, pdf_file_name):
-    # subprocess.call(
-    #     ["cairosvg", svg_file_name, "-o", pdf_file_name, "-d", "100"])
+    # http://cairosvg.org/user_documentation/#idapi
     return cairosvg.svg2pdf(url=svg_file_name)
 
 

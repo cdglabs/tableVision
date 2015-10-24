@@ -10,6 +10,11 @@ Python libraries to install:
 * numpy
 * scikit-image
 * networkx
+* cairosvg
+
+For printing:
+
+* lpr
 
 For camera server:
 
