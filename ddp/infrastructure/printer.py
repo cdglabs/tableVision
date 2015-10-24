@@ -1,5 +1,6 @@
 import subprocess
 import cairosvg
+from sys import platform
 
 
 def graph_to_svg(graph):
@@ -24,9 +25,12 @@ def svg_to_pdf(svg_file_name, pdf_file_name):
 
 
 def print_pdf(pdf_file_name):
-    # does not work for me: HP_LaserJet_200_colorMFP_M276nw__4EADB6_
+    printer_name = "HP-LaserJet-200-colorMFP-M276nw"
+    if platform == "darwin":
+        printer_name = "HP_LaserJet_200_colorMFP_M276nw__4EADB6_"
+
     subprocess.call([
         "lpr",
-        "-P", "HP-LaserJet-200-colorMFP-M276nw",
+        "-P", printer_name,
         pdf_file_name
     ])
