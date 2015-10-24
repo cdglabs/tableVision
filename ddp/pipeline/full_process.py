@@ -16,7 +16,7 @@ def run(img):
     printer.write_file("log/out.svg", svg)
     pdf = printer.svg_to_pdf("log/out.svg", "log/out.pdf")
     printer.write_file("log/out.pdf", pdf)
-    # printer.print_pdf("log/out.pdf")
+    printer.print_pdf("log/out.pdf")
 
 
 def sample():

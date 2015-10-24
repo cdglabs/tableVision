@@ -16,6 +16,9 @@ _windows = []
 
 def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[]):
     global _out_count
+    if _out_method == "silent":
+        return
+
     if background is None:
         img = np.zeros((height,width,3), np.uint8)
     elif len(background.shape) == 2:

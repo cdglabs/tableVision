@@ -54,6 +54,7 @@ import cv2
 # constants
 use_live_video = False
 run_interactive = False
+silent = True
 method_name_to_run = "run"
 
 # variables
@@ -86,7 +87,10 @@ def main():
     # TODO: Implement webcam, url, and image options.
     log.clear_log_directory()
     log.set_file_prefix(pipeline_name)
-    log.set_method("stream")
+    if silent:
+        log.set_method("silent")
+    elif run_interactive:
+        log.set_method("stream")
 
     if use_live_video:
         capture = cv2.VideoCapture(1)
