@@ -24,6 +24,7 @@ def svg_to_pdf(svg_file_name, pdf_file_name):
     return cairosvg.svg2pdf(url=svg_file_name)
 
 
+# find printers: lpstat -p -d
 def print_pdf(pdf_file_name):
     printer_name = "HP-LaserJet-200-colorMFP-M276nw"
     if platform == "darwin":
@@ -34,3 +35,4 @@ def print_pdf(pdf_file_name):
         "-P", printer_name,
         pdf_file_name
     ])
+    print "debug: after print lpr subprocess"

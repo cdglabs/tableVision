@@ -109,7 +109,7 @@ def main():
     else:
         run_once(pipeline, log)
 
-    if not run_interactive:
+    if not run_interactive and not silent:
         cv2.waitKey(0)
     if use_live_video:
         capture.release()

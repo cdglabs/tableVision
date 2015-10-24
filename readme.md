@@ -11,6 +11,7 @@ Python libraries to install:
 * scikit-image
 * networkx
 * cairosvg
+    * cairo: brew install cairo
 
 For printing:
 
