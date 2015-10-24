@@ -13,8 +13,9 @@ def run(img):
     graph = hv_lines(graph, background=extracted)
 
     svg = printer.graph_to_svg(graph)
-    # printer.write_file("log/out.svg", svg)
-    # printer.svg_to_pdf("log/out.svg", "log/out.pdf")
+    printer.write_file("log/out.svg", svg)
+    pdf = printer.svg_to_pdf("log/out.svg", "log/out.pdf")
+    printer.write_file("log/out.pdf", pdf)
     # printer.print_pdf("log/out.pdf")
 
 

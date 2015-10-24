@@ -16,6 +16,7 @@ Then this will print a pdf:
 """
 
 import subprocess
+import cairosvg
 
 
 def graph_to_svg(graph):
@@ -35,13 +36,15 @@ def write_file(file_name, contents):
 
 
 def svg_to_pdf(svg_file_name, pdf_file_name):
-    subprocess.call(
-        ["cairosvg", svg_file_name, "-o", pdf_file_name, "-d", "100"])
+    # subprocess.call(
+    #     ["cairosvg", svg_file_name, "-o", pdf_file_name, "-d", "100"])
+    return cairosvg.svg2pdf(url=svg_file_name)
 
 
 def print_pdf(pdf_file_name):
+    # does not work for me: HP_LaserJet_200_colorMFP_M276nw__4EADB6_
     subprocess.call([
         "lpr",
-        "-P", "HP_LaserJet_200_colorMFP_M276nw__4EADB6_",
+        "-P", "HP-LaserJet-200-colorMFP-M276nw",
         pdf_file_name
     ])

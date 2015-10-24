@@ -52,8 +52,8 @@ import cv2
 
 
 # constants
-use_live_video = True
-run_interactive = True
+use_live_video = False
+run_interactive = False
 method_name_to_run = "run"
 
 # variables
