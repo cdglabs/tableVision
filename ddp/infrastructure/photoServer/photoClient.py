@@ -12,8 +12,8 @@ def get_free_filename():
 
 
 def request_file():
-    # ws = create_connection("ws://192.168.1.155:8000/")
-    ws = create_connection("ws://localhost:8000/")
+    ws = create_connection("ws://192.168.1.155:8000/")
+    # ws = create_connection("ws://localhost:8000/")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"
