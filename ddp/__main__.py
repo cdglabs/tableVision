@@ -82,7 +82,7 @@ def main():
     pipeline_name = sys.argv[1]
     pipeline = importlib.import_module("pipeline." + pipeline_name)
     assert hasattr(pipeline, method_name_to_run), "module has to have "+method_name_to_run+" method"
-
+    
     # TODO: Implement logging options besides file output.
     # TODO: Implement webcam, url, and image options.
     log.clear_log_directory()
@@ -91,7 +91,7 @@ def main():
         log.set_method("silent")
     elif run_interactive:
         log.set_method("stream")
-
+    
     if use_live_video:
         capture = cv2.VideoCapture(1)
         # resolution
@@ -114,7 +114,9 @@ def main():
     if use_live_video:
         capture.release()
     cv2.destroyAllWindows()
+    print "done"
 
 
 if __name__ == "__main__":
     main()
+

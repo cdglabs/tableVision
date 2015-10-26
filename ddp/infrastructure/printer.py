@@ -35,4 +35,3 @@ def print_pdf(pdf_file_name):
         "-P", printer_name,
         pdf_file_name
     ])
-    print "debug: after print lpr subprocess"

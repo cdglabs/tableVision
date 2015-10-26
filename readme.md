@@ -20,6 +20,7 @@ For printing:
 For camera server:
 
 * gphoto2
+* websocket-client
 
 (TODO: Make sure this list is complete.)
 
