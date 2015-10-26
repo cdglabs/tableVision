@@ -21,10 +21,9 @@ def take_picture_from_camera():
     return file
 
 
-clients = []
 class TakePhotoServer(WebSocket):
     def handleMessage(self):
-        print self.address, "set message"
+        print self.address, "sent message"
     
     def handleConnected(self):
         print self.address, 'connected'

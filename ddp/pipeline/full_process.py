@@ -1,6 +1,7 @@
 import infrastructure.intake as intake
 import infrastructure.log as log
 import infrastructure.printer as printer
+import infrastructure.photoServer.photoClient as photoClient
 
 from pipeline.extract_paper import run as extract_paper
 from pipeline.sketch_graph import run as sketch_graph
@@ -20,4 +21,11 @@ def run(img):
 
 
 def sample():
-    return intake.image_file("input/grid_drawing.jpg")
+    file = "input/grid_drawing.jpg"
+    try:
+        file = photoClient.get_photo_from_server()
+    except Exception:
+        print "could not get photo. taking default file."
+        pass
+    
+    return intake.image_file(file)
