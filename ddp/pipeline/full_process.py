@@ -1,7 +1,6 @@
 import infrastructure.intake as intake
-import infrastructure.log as log
 import infrastructure.printer as printer
-import infrastructure.photoServer.photoClient as photoClient
+import infrastructure.photoClient as photoClient
 
 from pipeline.extract_paper import run as extract_paper
 from pipeline.sketch_graph import run as sketch_graph

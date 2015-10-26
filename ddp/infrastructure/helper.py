@@ -1,6 +1,6 @@
 import os
 from sys import platform
-from SimpleWebSocketServer import WebSocket
+import cv2
 
 
 def get_free_filename():
@@ -21,18 +21,16 @@ def take_picture_from_camera():
     return file
 
 
-class TakePhotoServer(WebSocket):
-    def handleMessage(self):
-        print self.address, "sent message"
+def take_picture_from_webcam():
+    cap = cv2.VideoCapture(1)
     
-    def handleConnected(self):
-        print self.address, 'connected'
-        file = take_picture_from_camera()
-        # file = "grid_drawing.jpg"
-        with open(file, "rb") as image_file:  # 
-            print "sending " + file + " to " + self.address[0]
-            self.sendMessage(image_file.read())
-            print "done sending"
-
-    def handleClose(self):
-        print self.address, 'closed'
+    # take 3, because the first couple may be screwed
+    ret, frame = cap.read()
+    ret, frame = cap.read()
+    ret, frame = cap.read()
+    
+    print "saving to: "+get_free_filename()
+    cv2.imwrite(get_free_filename(), frame)
+    
+    cap.release()
+    cv2.destroyAllWindows()

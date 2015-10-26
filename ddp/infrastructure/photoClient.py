@@ -1,22 +1,15 @@
 # sudo pip install websocket-client
 import websocket
-import os
+
+import helper
 
 received_image = None
 
 
-def get_free_filename():
-    filename_number = 1
-    get_filename = lambda: os.getcwd()+"/"+"photo"+str(filename_number).zfill(3)+".jpg"
-    while os.path.isfile(get_filename()):
-        filename_number += 1
-    return get_filename()
-    
-    
 def on_message(ws, result):
     global received_image
     # print "receiving message", type(result), len(result)
-    received_image = get_free_filename()
+    received_image = helper.get_free_filename()
     with open(received_image, 'w') as img:
         img.write(result)
     ws.close()
