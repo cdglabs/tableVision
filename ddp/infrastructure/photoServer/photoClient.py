@@ -12,15 +12,14 @@ def get_free_filename():
 
 
 def request_file():
-    ws = create_connection("ws://192.168.1.155:8000/")
-    # ws = create_connection("ws://localhost:8000/")
+    # ws = create_connection("ws://192.168.1.155:8000/")
+    ws = create_connection("ws://localhost:8000/")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"
     print "Reeiving..."
     result = ws.recv()
-    print "first receive done"
-    result = ws.recv()
+    # print result
     print type(result)
     print len(result)
     with open(get_free_filename(), 'w') as img:

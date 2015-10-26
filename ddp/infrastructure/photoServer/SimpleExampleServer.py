@@ -24,8 +24,9 @@ clients = []
 class SimpleChat(WebSocket):
     def handleMessage(self):
         for client in list(clients):
-            if client != self:
-                client.sendMessage(self.address[0] + ' - ' + self.data)
+            # if client != self:
+            with open("grid_drawing.jpg", "rb") as image_file:
+                client.sendMessage(image_file.read())
 
     def handleConnected(self):
         print self.address, 'connected'
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
     parser.add_option("--host", default='', type='string', action="store", dest="host", help="hostname (localhost)")
     parser.add_option("--port", default=8000, type='int', action="store", dest="port", help="port (8000)")
-    parser.add_option("--example", default='', type='string', action="store", dest="example", help="echo, chat")
+    parser.add_option("--example", default='chat', type='string', action="store", dest="example", help="echo, chat")
     parser.add_option("--ssl", default=0, type='int', action="store", dest="ssl", help="ssl (1: on, 0: off (default))")
     parser.add_option("--cert", default='./cert.pem', type='string', action="store", dest="cert", help="cert (./cert.pem)")
     parser.add_option("--ver", default=ssl.PROTOCOL_TLSv1, type=int, action="store", dest="ver", help="ssl version")
