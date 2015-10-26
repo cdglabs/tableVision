@@ -25,6 +25,7 @@ class TakePhotoServer(WebSocket):
     def handleMessage(self):
         with open(take_picture_from_camera(), "rb") as image_file:
             self.sendMessage(image_file.read())
+            print "sending " + image_file
     
     def handleConnected(self):
         pass

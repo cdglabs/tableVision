@@ -51,7 +51,7 @@ if __name__ == "__main__":
     
     (options, args) = parser.parse_args()
     
-    cls = photoServer
+    cls = photoServer.TakePhotoServer
     if options.example == 'echo':
         cls = SimpleEcho
     if options.example == 'chat':
