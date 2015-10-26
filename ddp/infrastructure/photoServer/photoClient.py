@@ -19,6 +19,8 @@ def request_file():
     print "Sent"
     print "Reeiving..."
     result = ws.recv()
+    print "first receive done"
+    result = ws.recv()
     print type(result)
     print len(result)
     with open(get_free_filename(), 'w') as img:

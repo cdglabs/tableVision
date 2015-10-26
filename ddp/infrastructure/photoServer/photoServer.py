@@ -24,6 +24,8 @@ def take_picture_from_camera():
 clients = []
 class TakePhotoServer(WebSocket):
     def handleMessage(self):
+        for client in list(clients):
+            client.sendMessage(self.address[0] + ' - ' + "getting file ready for you")
         with open(take_picture_from_camera(), "rb") as image_file:
             for client in list(clients):
                 print "sending " + image_file + " to " + self.address[0]
