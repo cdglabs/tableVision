@@ -24,23 +24,15 @@ def take_picture_from_camera():
 clients = []
 class TakePhotoServer(WebSocket):
     def handleMessage(self):
-        # for client in list(clients):
-        #     client.sendMessage(self.address[0] + ' - ' + "getting file ready for you")
-        with open(take_picture_from_camera(), "rb") as image_file:
-            for client in list(clients):
-                print "sending " + image_file + " to " + self.address[0]
-                client.sendMessage(image_file.read())
-                print "done sending"
-        print "done handling message"
+        print self.address, "set message"
     
     def handleConnected(self):
         print self.address, 'connected'
-        for client in list(clients):
-            client.sendMessage(self.address[0] + u' - connected')
-        clients.append(self)
+        file = take_picture_from_camera()
+        with open(file, "rb") as image_file:  # 
+            print "sending " + file + " to " + self.address[0]
+            self.sendMessage(image_file.read())
+            print "done sending"
 
     def handleClose(self):
-        clients.remove(self)
         print self.address, 'closed'
-        for client in list(clients):
-            client.sendMessage(self.address[0] + u' - disconnected')
