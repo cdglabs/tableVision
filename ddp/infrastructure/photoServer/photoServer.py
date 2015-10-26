@@ -31,6 +31,7 @@ class TakePhotoServer(WebSocket):
                 print "sending " + image_file + " to " + self.address[0]
                 client.sendMessage(image_file.read())
                 print "done sending"
+        print "done handling message"
     
     def handleConnected(self):
         print self.address, 'connected'
