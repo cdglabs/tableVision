@@ -53,8 +53,8 @@ def on_close(ws, message):
     
     
 def better():
-    # ws = websocket.WebSocketApp("ws://192.168.1.155:8000/",
-    ws = websocket.WebSocketApp("ws://localhost:8000/",
+    ws = websocket.WebSocketApp("ws://192.168.1.155:8000/",
+    # ws = websocket.WebSocketApp("ws://localhost:8000/",
         on_message = on_message,
         on_error = on_error,
         on_close = on_close)

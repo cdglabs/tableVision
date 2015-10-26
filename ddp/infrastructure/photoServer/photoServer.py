@@ -28,8 +28,8 @@ class TakePhotoServer(WebSocket):
     
     def handleConnected(self):
         print self.address, 'connected'
-        # file = take_picture_from_camera()
-        file = "grid_drawing.jpg"
+        file = take_picture_from_camera()
+        # file = "grid_drawing.jpg"
         with open(file, "rb") as image_file:  # 
             print "sending " + file + " to " + self.address[0]
             self.sendMessage(image_file.read())
