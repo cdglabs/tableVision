@@ -18,8 +18,10 @@ def run(img):
 
     components = nx.connected_components(graph)
 
-    circles = list(topology.fit_circle_to_points(list(component))
-        for component in components)
+    circles = [
+        topology.fit_circle_to_points(list(component))
+        for component in components
+    ]
 
     log.image(img, circles=circles)
 
