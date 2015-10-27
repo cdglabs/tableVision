@@ -44,19 +44,22 @@ def find_paper(img):
 # outlines the paper in img. extract_paper returns a color image that is
 # 1100x850 (US Letter paper) of the perspective-corrected paper.
 def extract_paper(img, paper):
-    # Figure out the orientation.
-    dist01 = np.linalg.norm(paper[0] - paper[1])
-    dist03 = np.linalg.norm(paper[0] - paper[3])
-    horizontal = dist01 > dist03
-    paper = np.array([
-        paper[0] if horizontal else paper[1],
-        paper[1] if horizontal else paper[2],
-        paper[2] if horizontal else paper[3],
-        paper[3] if horizontal else paper[0]
-    ], np.float32)
+    # Ensure that paper coordinates are specified clockwise.
+    clockwise = cv2.contourArea(paper, True) > 0
+    if not clockwise:
+        paper = np.flipud(paper)
 
-    # us letter: 8.5 by 11
-    source = np.array([[0, 850], [1100, 850], [1100, 0], [0, 0]], np.float32)
+    # Ensure that the paper is in "landscape" as opposed to portrait view.
+    width = np.linalg.norm(paper[0] - paper[1])
+    height = np.linalg.norm(paper[0] - paper[3])
+    if height > width:
+        # Portrait, so rotate once.
+        paper = np.roll(paper, 1, axis=0)
+
+    paper = paper.astype(np.float32)
+
+    # US Letter: 8.5 by 11 at 100dpi
+    source = np.array([ (0,0), (1100,0), (1100,850), (0,850) ], np.float32)
     transformMatrix = cv2.getPerspectiveTransform(paper, source)
     transformed = cv2.warpPerspective(img, transformMatrix, (1100, 850))
     return transformed
