@@ -83,28 +83,28 @@ def main():
     parser.add_option("--interactive", default=False, action="store_true", dest="interactive")
     parser.add_option("--image_source", default="newPhoto", type='string', action="store", dest="image_source",
         help="newPhoto, webcamStill, webcamStream, sample")  # TODO add custom file option
-    
+
     (options, args) = parser.parse_args()
-    
+
     pipeline_name = options.pipeline
     pipeline = importlib.import_module("pipeline." + pipeline_name)
     assert hasattr(pipeline, method_name_to_run), "module has to have "+method_name_to_run+" method"
-    
+
     log.clear_log_directory()
     log.set_file_prefix(pipeline_name)
-    
+
     if options.image_source == "webcamStream":
         options.interactive = True
         capture = cv2.VideoCapture(1)
         # resolution
         capture.set(3, 1920)
         capture.set(4, 1080)
-        
+
     if not options.log:
         log.set_method("silent")
     elif options.interactive:
         log.set_method("stream")
-    
+
     if options.image_source == "newPhoto":
         try:
             file = photoClient.get_photo_from_server()
@@ -112,13 +112,13 @@ def main():
         except Exception:
             print "could not get photo. using sample file instead."
             options.image_source = "sample"
-            
+
     if options.image_source == "sample":
         frame = pipeline.sample()
-        
+
     if options.image_source == "webcamStill":
         frame = intake.image_file(helper.take_picture_from_webcam())
-        
+
     assert frame is not None or capture is not None
     if options.interactive:
         # TODO reload only reloads the immediate file, not its dependencies
@@ -128,9 +128,9 @@ def main():
                 break
     else:
         run_once(pipeline, options)
-    
-    if not options.interactive and options.log:
-        cv2.waitKey(0)
+
+    # if not options.interactive and options.log:
+    #     cv2.waitKey(0)
     if options.image_source == "webcamStream":
         capture.release()
     cv2.destroyAllWindows()

@@ -23,12 +23,11 @@ def run(img):
 
     log.image(img, circles=circles)
 
-    print list(circles)
     svg = printer.circles_to_svg(circles)
     printer.write_file("log/out.svg", svg)
     pdf = printer.svg_to_pdf("log/out.svg", "log/out.pdf")
     printer.write_file("log/out.pdf", pdf)
-    printer.print_pdf("log/out.pdf")
+    # printer.print_pdf("log/out.pdf")
 
     return graph
 
