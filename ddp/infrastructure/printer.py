@@ -12,6 +12,18 @@ def graph_to_svg(graph):
     svg += '</svg>'
     return svg
 
+# This is ad-hoc for now. Later we'll probably want to merge log.image with
+# the svg writer. That is, I think they'll want to have the same API.
+def circles_to_svg(circles):
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="850" version="1.1">\n'
+    for ((x,y), radius) in circles:
+        circle = '<circle cx="{0}" cy="{1}" r="{2}" fill="none" stroke="black" stroke-width="2" />\n'.format(
+            x, y, radius)
+        svg += circle
+    svg += '</svg>'
+    return svg
+
+
 
 def write_file(file_name, contents):
     text_file = open(file_name, "w")

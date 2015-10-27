@@ -14,7 +14,14 @@ _out_prefix = "out"
 _windows = []
 
 
-def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[]):
+def to_int(x):
+    if hasattr(x, '__iter__'):
+        return tuple(map(int, x))
+    else:
+        return int(x)
+
+
+def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[], circles=[]):
     global _out_count
     if _out_method == "silent":
         return
@@ -28,11 +35,13 @@ def image(background=None, width=800, height=600, contours=[], points=[], lines=
 
     cv2.drawContours(img, contours, -1, (0,100,255), 2)
     for (x,y) in pixels:
-        img[y,x] = [100,0,255]
+        img[to_int(y),to_int(x)] = [100,0,255]
     for (p1, p2) in lines:
-        cv2.line(img, p1, p2, (0,255,0), 2)
+        cv2.line(img, to_int(p1), to_int(p2), (0,255,0), 2)
     for point in points:
-        cv2.circle(img, point, 4, (0,0,255), -1)
+        cv2.circle(img, to_int(point), 4, (0,0,255), -1)
+    for (center, radius) in circles:
+        cv2.circle(img, to_int(center), to_int(radius), (0,255,0), 2)
 
     if _out_method == "file":
         file_name = generate_file_name("png")
