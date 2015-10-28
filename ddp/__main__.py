@@ -85,16 +85,16 @@ def main():
     parser.add_option("--interactive", default=False, action="store_true", dest="interactive")
     parser.add_option("--image_source", default="webcamStill", type='string', action="store", dest="image_source",
         help="webcamStill, webcamStream, sample, webcamStillLocal, webcamStreamLocal")  # TODO add custom file option
-    
+
     (options, args) = parser.parse_args()
-    
+
     pipeline_name = options.pipeline
     pipeline = importlib.import_module("pipeline." + pipeline_name)
     assert hasattr(pipeline, method_name_to_run), "module has to have "+method_name_to_run+" method"
-    
+
     log.clear_log_directory()
     log.set_file_prefix(pipeline_name)
-    
+
     if options.image_source == "webcamStream":
         options.interactive = True
         capture = streamingClient.connect_to_streaming_server()
@@ -111,7 +111,7 @@ def main():
         frame = streamingClient.get_one_picture_from_streaming_server()
     if options.image_source == "webcamStillLocal":
         frame = intake.image_file(helper.take_picture_from_webcam(1))
-    
+
     assert frame is not None or capture is not None
     
     def close(signal=None, frame=None):
@@ -133,9 +133,9 @@ def main():
                 break
     else:
         run_once(pipeline, options)
-    
+
     close()
-    
+
 
 
 if __name__ == "__main__":
