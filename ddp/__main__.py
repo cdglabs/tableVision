@@ -118,8 +118,6 @@ def main():
         if capture is not None:
             capture.release()
         cv2.destroyAllWindows()
-        if not options.interactive:
-            cv2.waitKey(0)
         print "done"
         sys.exit()
     
