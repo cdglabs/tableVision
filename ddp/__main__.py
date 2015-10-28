@@ -49,9 +49,11 @@ import importlib
 import infrastructure.log as log
 import cv2
 from optparse import OptionParser
-import infrastructure.photoClient as photoClient
+import infrastructure.streamingClient as streamingClient
 import infrastructure.intake as intake
 import infrastructure.helper as helper
+import signal
+import sys
 
 # constants
 method_name_to_run = "run"
@@ -81,8 +83,8 @@ def main():
         help="any file name from ./pipeline (written without '.py')")
     parser.add_option("--log", default=False, action="store_true", dest="log")
     parser.add_option("--interactive", default=False, action="store_true", dest="interactive")
-    parser.add_option("--image_source", default="newPhoto", type='string', action="store", dest="image_source",
-        help="newPhoto, webcamStill, webcamStream, sample")  # TODO add custom file option
+    parser.add_option("--image_source", default="webcamStill", type='string', action="store", dest="image_source",
+        help="webcamStill, webcamStream, sample, webcamStillLocal, webcamStreamLocal")  # TODO add custom file option
     
     (options, args) = parser.parse_args()
     
@@ -95,31 +97,34 @@ def main():
     
     if options.image_source == "webcamStream":
         options.interactive = True
-        capture = cv2.VideoCapture(1)
-        # resolution
-        capture.set(3, 1920)
-        capture.set(4, 1080)
-        
-    if not options.log:
-        log.set_method("silent")
-    elif options.interactive:
+        capture = streamingClient.connect_to_streaming_server()
+    if options.image_source == "webcamStreamLocal":
+        options.interactive = True
+        capture = helper.get_webcam_capture(1)
+    if options.log:
+        log.set_method("file")
+    if options.interactive:
         log.set_method("stream")
-    
-    if options.image_source == "newPhoto":
-        try:
-            file = photoClient.get_photo_from_server()
-            frame = intake.image_file(file)
-        except Exception:
-            print "could not get photo. using sample file instead."
-            options.image_source = "sample"
-            
     if options.image_source == "sample":
         frame = pipeline.sample()
-        
     if options.image_source == "webcamStill":
-        frame = intake.image_file(helper.take_picture_from_webcam())
-        
+        frame = streamingClient.get_one_picture_from_streaming_server()
+    if options.image_source == "webcamStillLocal":
+        frame = intake.image_file(helper.take_picture_from_webcam(1))
+    
     assert frame is not None or capture is not None
+    
+    def close(signal=None, frame=None):
+        if capture is not None:
+            capture.release()
+        cv2.destroyAllWindows()
+        if not options.interactive:
+            cv2.waitKey(0)
+        print "done"
+        sys.exit()
+    
+    signal.signal(signal.SIGINT, close)
+    
     if options.interactive:
         # TODO reload only reloads the immediate file, not its dependencies
         pipeline = reload(pipeline)
@@ -129,12 +134,8 @@ def main():
     else:
         run_once(pipeline, options)
     
-    if not options.interactive and options.log:
-        cv2.waitKey(0)
-    if options.image_source == "webcamStream":
-        capture.release()
-    cv2.destroyAllWindows()
-    print "done"
+    close()
+    
 
 
 if __name__ == "__main__":

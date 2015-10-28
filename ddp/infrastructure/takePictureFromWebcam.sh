@@ -1,3 +1,4 @@
+# ffmpeg -f v4l2 -list_formats all -i /dev/video1
 
 devNo=0
 shotsNo=9 # up to 9

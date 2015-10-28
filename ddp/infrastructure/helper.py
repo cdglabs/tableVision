@@ -2,6 +2,7 @@ import os
 from sys import platform
 import cv2
 
+_default_cam_no = 0
 
 def get_free_filename(ext="jpg"):
     dir = os.getcwd()
@@ -26,18 +27,26 @@ def take_picture_from_camera():
     return file
 
 
-def take_picture_from_webcam(camNo=1):
+def get_webcam_capture(camNo=_default_cam_no):
     cap = cv2.VideoCapture(camNo)
-    
+    # resolution
+    cap.set(3, 2592)
+    cap.set(4, 1944)
+    return cap
+
+
+def take_picture_from_webcam(camNo=_default_cam_no):
+    cap = get_webcam_capture(camNo)
     # take 3, because the first couple may be screwed
+    cap.read()
+    cap.read()
     ret, frame = cap.read()
-    ret, frame = cap.read()
-    ret, frame = cap.read()
-    
-    file = get_free_filename()
-    print "saving to: "+file
-    cv2.imwrite(file, frame)
-    
+    file = save_frame(frame)
     cap.release()
-    cv2.destroyAllWindows()
+    return file
+
+
+def save_frame(frame):
+    file = get_free_filename()
+    cv2.imwrite(file, frame)
     return file

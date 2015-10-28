@@ -8,7 +8,7 @@ import math
 
 # TODO: output as live cv2 tiled images
 
-_out_method = "file"
+_out_method = "silent"
 _out_count = 0
 _out_prefix = "out"
 _windows = []
@@ -18,7 +18,6 @@ def image(background=None, width=800, height=600, contours=[], points=[], lines=
     global _out_count
     if _out_method == "silent":
         return
-
     if background is None:
         img = np.zeros((height,width,3), np.uint8)
     elif len(background.shape) == 2:
@@ -39,12 +38,13 @@ def image(background=None, width=800, height=600, contours=[], points=[], lines=
         cv2.imwrite(file_name, img)
     if _out_method == "stream":
         draw_window(img)
-
+    
     _out_count += 1
 
 def draw_window(img):
     global _out_count
     assert _out_count < 64, "too many windows"
+    
     window_name = str(_out_count)
     if len(_windows) <= _out_count:
         _windows.append("is_new_window")
