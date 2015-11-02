@@ -88,9 +88,8 @@ def binarize_ink(img):
     return binarized
 
 
-def white_balance(img):
-    randomPoolSize = 100
-    selectionPoolSize = 20
+def white_balance(inimg, randomPoolSize = 100, selectionPoolSize = 20):
+    img = inimg.copy()
     height, width, colors = img.shape  # y, x, color
     randomPixels = map(
         lambda id: img[

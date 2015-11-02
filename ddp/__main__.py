@@ -111,7 +111,7 @@ def main():
         frame = streamingClient.get_one_picture_from_streaming_server()
     if options.image_source == "webcamStillLocal":
         frame = intake.image_file(helper.take_picture_from_webcam(1))
-
+    
     assert frame is not None or capture is not None
     
     def close(signal=None, frame=None):
