@@ -21,6 +21,7 @@ import networkx as nx
 import itertools
 import math
 import numpy as np
+import infrastructure.helper as helper
 
 
 def pairwise(iterable):
@@ -96,20 +97,28 @@ def rdp(points, epsilon):
     return results
 
 
-def produce_graph(img):
+def produce_graph(skeleton_img, hsv_image = None):
     """Takes in a skeletonized image (with foreground as 255 and background as
     0) and produces a graph of appropriately connected pixel locations.
     """
+    reload(helper)
+    
     graph = nx.Graph()
-    (rows, cols) = img.shape
+    (rows, cols) = skeleton_img.shape
     for y in xrange(rows):
         for x in xrange(cols):
-            pixel = img.item(y, x)
+            pixel = skeleton_img.item(y, x)
             if pixel == 255:
                 point = (x, y)
-                graph.add_node(point)
+                attribute_dict = None
+                if hsv_image is not None:
+                    hsv_pixel = tuple( hsv_image[y][x] )
+                    color = helper.Colors.get_color_compartment(hsv_pixel)
+                    attribute_dict = {'color': color}
+                graph.add_node(point, attribute_dict)
+                
                 for neighbor in neighbor_coords(point, (cols, rows)):
-                    neighbor_pixel = img.item(neighbor[1], neighbor[0])
+                    neighbor_pixel = skeleton_img.item(neighbor[1], neighbor[0])
                     if neighbor_pixel == 255:
                         graph.add_edge(point, neighbor)
     return graph

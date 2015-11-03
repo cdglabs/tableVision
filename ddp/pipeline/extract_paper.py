@@ -4,16 +4,16 @@ import infrastructure.log as log
 import core.vision as vision
 
 
-def run(img):
+def run(img, logOn=True):
     edges = vision.find_edges(img)
-    log.image(background=edges)
+    if logOn: log.image(background=edges)
 
     paper_contour = vision.find_paper(edges)
-    log.image(background=img, contours=[paper_contour])
+    if logOn: log.image(background=img, contours=[paper_contour])
 
     extracted = vision.extract_paper(img, paper_contour)
-    log.image(background=extracted)
-
+    if logOn: log.image(background=extracted)
+    
     return extracted
 
 

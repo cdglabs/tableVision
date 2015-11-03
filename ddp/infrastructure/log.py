@@ -4,7 +4,7 @@ import networkx as nx
 import os
 import glob
 import math
-
+import infrastructure.helper as helper
 
 # TODO: output as live cv2 tiled images
 
@@ -21,7 +21,8 @@ def to_int(x):
         return int(x)
 
 
-def image(background=None, width=800, height=600, contours=[], points=[], lines=[], pixels=[], circles=[]):
+def image(background=None, width=800, height=600,
+          contours=[], points=[], lines=[], pixels=[], circles=[], graph=None):
     global _out_count
     if _out_method == "silent":
         return
@@ -32,16 +33,26 @@ def image(background=None, width=800, height=600, contours=[], points=[], lines=
     else:
         img = background.copy()
 
+    def get_color_from_node(node, default_color=(0,0,255)):
+        if graph is not None and 'color' in graph.node[node]:
+            return helper.Colors.get_rgb(graph.node[node]['color'])
+        return default_color
+    
     cv2.drawContours(img, contours, -1, (0,100,255), 2)
-    for (x,y) in pixels:
-        img[to_int(y),to_int(x)] = [100,0,255]
+    for point in pixels:
+        (x,y) = point
+        (r,g,b) = get_color_from_node(point, (0,0,255))
+        # BGR
+        img[to_int(y),to_int(x)] = np.uint8([b,g,r])
     for (p1, p2) in lines:
         cv2.line(img, to_int(p1), to_int(p2), (0,255,0), 2)
     for point in points:
-        cv2.circle(img, to_int(point), 4, (0,0,255), -1)
+        color = get_color_from_node(point, (0,0,255))
+        cv2.circle(img, to_int(point), 4, color, -1)
     for (center, radius) in circles:
         cv2.circle(img, to_int(center), to_int(radius), (0,255,0), 2)
-
+    
+    
     if _out_method == "file":
         file_name = generate_file_name("png")
         cv2.imwrite(file_name, img)

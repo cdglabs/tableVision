@@ -41,28 +41,47 @@ def find_paper(img):
 
 
 # img is the raw color image. paper is the contour with four-points that
-# outlines the paper in img. extract_paper returns a color image that is
-# 1100x850 (US Letter paper) of the perspective-corrected paper.
-def extract_paper(img, paper):
+# outlines the paper in img.
+def extract_paper(img, paper, is_upside_down = True):
+    assert len(paper) == 4
     # Ensure that paper coordinates are specified clockwise.
     clockwise = cv2.contourArea(paper, True) > 0
     if not clockwise:
         paper = np.flipud(paper)
-
+    
     # Ensure that the paper is in "landscape" as opposed to portrait view.
-    width = np.linalg.norm(paper[0] - paper[1])
-    height = np.linalg.norm(paper[0] - paper[3])
-    if height > width:
+    length_edge1 = np.linalg.norm(paper[0] - paper[1])
+    length_edge2 = np.linalg.norm(paper[0] - paper[3])
+    if length_edge2 > length_edge1:
         # Portrait, so rotate once.
         paper = np.roll(paper, 1, axis=0)
-
+    
     paper = paper.astype(np.float32)
-
-    # US Letter: 8.5 by 11 at 100dpi
-    source = np.array([ (0,0), (1100,0), (1100,850), (0,850) ], np.float32)
+    
+    # US Letter: 8.5 by 11 inches
+    paper_long_side_mm = 279.4
+    paper_short_side_mm = 215.9
+    pixels_per_mm = 5
+    w = int(paper_long_side_mm * pixels_per_mm)
+    h = int(paper_short_side_mm * pixels_per_mm)
+    model_paper_normal = [ (0,0), (w,0), (w,h), (0,h) ]
+    model_paper_upside_down = [ (w,h), (0,h), (0,0), (w,0) ]
+    model_paper = model_paper_upside_down if is_upside_down else model_paper_normal
+    
+    source = np.array(model_paper, np.float32)
     transformMatrix = cv2.getPerspectiveTransform(paper, source)
-    transformed = cv2.warpPerspective(img, transformMatrix, (1100, 850))
+    transformed = cv2.warpPerspective(img, transformMatrix, (w, h))
     return transformed
+
+
+def delete_margins_from_binary_image(binarized, margin_percent = 0.01):
+    (height, width) = binarized.shape
+    margin = int(margin_percent * min(width, height)) 
+    cv2.rectangle(binarized, (0, 0), (width, margin), 0, -1)
+    cv2.rectangle(binarized, (0, 0), (margin, height), 0, -1)
+    cv2.rectangle(binarized, (width-margin, 0), (width, height), 0, -1)
+    cv2.rectangle(binarized, (0, height-margin), (width, height), 0, -1)
+    return binarized
 
 
 # img is a color image of paper with ink. binarize_ink returns a binary image
@@ -70,7 +89,8 @@ def extract_paper(img, paper):
 def binarize_ink(img):
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blockSize = 45
-    threshold = 6
+    threshold = 50  # Constant subtracted from the mean or weighted mean
+    # http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html
     binarized = cv2.adaptiveThreshold(
         grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,
         blockSize, threshold
@@ -78,13 +98,7 @@ def binarize_ink(img):
 
     # Delete margins. That is, make sure the edges of the paper don't get
     # picked up as ink.
-    margin = 20
-    (height, width) = binarized.shape
-    cv2.rectangle(binarized, (0, 0), (width, margin), 0, -1)
-    cv2.rectangle(binarized, (0, 0), (margin, height), 0, -1)
-    cv2.rectangle(binarized, (width-margin, 0), (width, height), 0, -1)
-    cv2.rectangle(binarized, (0, height-margin), (width, height), 0, -1)
-
+    binarized = delete_margins_from_binary_image(binarized)
     return binarized
 
 
@@ -132,3 +146,16 @@ def skeletonize(img):
     skeleton = skeleton.astype(np.uint8)
     skeleton = skeleton * 255
     return skeleton
+
+
+def remove_noise_from_binary_image(binary_image):
+    (contours, _) = cv2.findContours(binary_image.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    threshold_size = 40
+    small_blobs = []
+    for i in range(len(contours)):
+        if cv2.contourArea(contours[i]) < threshold_size:
+            small_blobs.append(contours[i])
+
+    # flood fill small blobs with black
+    cv2.drawContours(binary_image, small_blobs, -1, 0, thickness=-1)
+    return binary_image

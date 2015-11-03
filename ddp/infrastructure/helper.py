@@ -50,3 +50,47 @@ def save_frame(frame):
     file = get_free_filename()
     cv2.imwrite(file, frame)
     return file
+
+
+class Colors:
+    Black = 0
+    Red = 1
+    Yellow = 2
+    Green = 3
+    Blue_aqua = 4
+    Violett = 5
+    
+    @staticmethod
+    def get_rgb(color):
+        if color == Colors.Black: return (255,255,255)
+        if color == Colors.Red: return (255,0,0)
+        if color == Colors.Yellow: return (255,255,0)
+        if color == Colors.Green: return (0,255,0)
+        if color == Colors.Blue_aqua: return (0,0,255)
+        if color == Colors.Violett: return (255,0,255)
+        assert False, "fell through"
+
+    @staticmethod
+    def get_color_compartment((hue, sat, value)):
+        def inn(x, low, high):
+            return low <= x and x < high
+        
+        assert inn(hue, 0, 180)
+        assert inn(sat, 0, 256)
+        assert inn(value, 0, 256)
+        
+        if sat < 30 or value < 100:
+            return Colors.Black
+        
+        if inn(hue, 0, 17) or inn(hue, 153, 180):
+            return Colors.Red
+        if inn(hue, 17, 40):
+            return Colors.Yellow
+        if inn(hue, 40, 84):
+            return Colors.Green
+        if inn(hue, 84, 115):
+            return Colors.Blue_aqua
+        if inn(hue, 115, 153):
+            return Colors.Violett
+        
+        assert False, "fell through"

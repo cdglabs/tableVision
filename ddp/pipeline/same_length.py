@@ -5,6 +5,11 @@ from core import vision
 import numpy as np
 import core.vision as vision
 import core.topology as topology
+import math
+
+from pipeline.extract_paper import run as extract_paper
+from pipeline.sketch_graph import run as sketch_graph
+from pipeline.hv_lines import run as hv_lines
 
 
 def find_ranges(colorDict):
@@ -34,41 +39,14 @@ def find_ranges(colorDict):
     return result
         
 
-def remove_small_contours(binary_image):
-    (contours, _) = cv2.findContours(binary_image.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-
-    threshold = 0
-    small_blobs = []
-    for idx, contour in enumerate(contours):
-        if cv2.contourArea(contour) < threshold:
-            cv2.drawContours(binary_image, contours, idx, 0)
-            # print idx
-    
-    # cv2.drawContours(image, contours, contourIdx, color[, thickness[, lineType[, hierarchy[, maxLevel[, offset]]]]])
-    return binary_image
 
 
-def run(img):
-    # img = cv2.flip(img,-1)
-    log.image(img)
-    
-    # edges = vision.find_edges(img)
-    # paper = vision.find_paper(edges)
-    # extracted = vision.extract_paper(img, paper)
-    # log.image(extracted)
 
-    white_balanced_image = vision.white_balance(img)
-    # log.image(white_balanced_image)
+
+
+
+def getColourComponents(white_balanced_image):
     hsv_image = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
-
-    # TODO: connect red component paths / find crossings
-    #~ Threshold the HSV image, keep only the red pixels
-    #Python: cv2.inRange(src, lowerb, upperb[, dst])  dst
-    # For HSV, Hue range is [0,179], Saturation range is [0,255] and Value range is [0,255].
-    # note: Value 255 is not white, as in HSL, but a fully bright color
-    satStart = 70
-    valStart = 30
-    
     # color centers:
     # 0=180 red
     baseColorsCenter = {'red': 0, 'yellow': 30, 'green': 60, 'aqua': 90, 'blue': 120, 'violett': 150}
@@ -91,10 +69,12 @@ def run(img):
     #     'purple': [(140, 172)]
     # }
     
-    
     colorImages = {}
     for key, list in colorRanges.iteritems():
         assert len(list) == 1 or len(list) == 2
+        # Python: cv2.inRange(src, lowerb, upperb[, dst])  dst
+        # For HSV, Hue range is [0,179], Saturation range is [0,255] and Value range is [0,255].
+        # note: Value 255 is not white, as in HSL, but a fully bright color
         colorImages[key] = cv2.inRange(hsv_image, (list[0][0], list[0][2], list[0][3]), (list[0][1], 255, 255))
         if (len(list) == 2):
             secondCompound = cv2.inRange(hsv_image, (list[1][0], list[0][2], list[0][3]), (list[1][1], 255, 255))
@@ -104,23 +84,76 @@ def run(img):
         # erosion = cv2.erode(colorImages[key], kernel, iterations=1)
         # dilation = cv2.dilate(erosion, kernel, iterations=1)
         # log.image(dilation)
-        
-        skeleton = vision.skeletonize(colorImages[key])
+    
+    return colorImages
+     
+
+def run(img):
+    # log.image(img)
+    extracted = extract_paper(img, logOn=False)
+    white_balanced_image = vision.white_balance(extracted)
+    # log.image(white_balanced_image)
+    hsv = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
+    
+    stroke_width_mm = 0.2  # Sharpie ultra fine
+    # TODO globalise
+    pixels_per_mm = 10
+    stroke_width_px_int = int( math.ceil( stroke_width_mm * pixels_per_mm ) )
+    # print mean_pixels_per_mm
+    
+    # problem: normal cv2.COLOR_BGR2GRAY converts to a very light grey for, say, yellow strokes
+    # convert to grey emphasising saturation!
+    hsv_factors = [0, -2, 1]
+    mat = np.array(hsv_factors).reshape((1,3))
+    myGrey = cv2.transform(hsv, mat)
+    # log.image(myGrey)
+    
+    # grey = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2GRAY)
+    # Size of a pixel neighborhood that is used to calculate a threshold value
+    blockSize = stroke_width_px_int * 25
+    noise_reduction = 25
+    def uneven(x): return x + x % 2 + 1
+    # http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html
+    binarized = cv2.adaptiveThreshold(
+        myGrey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,
+        uneven(blockSize), noise_reduction
+    )
+    # log.image(binarized)
+    
+    filtered = vision.remove_noise_from_binary_image(binarized)
+    filtered = vision.delete_margins_from_binary_image(filtered)
+    log.image(filtered)
+    
+    skeleton = vision.skeletonize(filtered)
+    log.image(background=skeleton)
+    
+    graph = topology.produce_graph(skeleton, hsv_image=hsv)
+    log.image(
+        background=white_balanced_image,
+        pixels=graph.nodes(),
+        graph=graph
+    )
+    
+    # colorImages = getColourComponents(white_balanced_image)
+    
+
+    # for cImg in colorImages:
+    #     skeleton = vision.skeletonize(cImg)
         # log.image(background=skeleton)
-        
-        graph = topology.produce_graph(skeleton)
+    
+        # graph = topology.produce_graph(skeleton)
         # log.image(
         #     background=img,
         #     pixels=graph.nodes()
         # )
         # log.gpickle(graph)
-        
-        graph = topology.simplify_junctures(graph)
-        log.image(
-            background=img,
-            points=(node for node in graph.nodes() if graph.degree(node) != 2)
-        )
-        
+    
+        # graph = topology.simplify_junctures(graph)
+        # log.image(
+        #     background=img,
+        #     points=(node for node in graph.nodes() if graph.degree(node) != 2)
+        # )
+    
         # skeleton = removeSmallContours(skeleton)
         # log.image(background=skeleton)
     
@@ -137,5 +170,5 @@ def run(img):
 
 
 def sample():
-    return intake.image_file("input/photo004_cut.png")
+    return intake.image_file("input/photo004.png")
     # return intake.image_file("input/photo003_colors.png")
