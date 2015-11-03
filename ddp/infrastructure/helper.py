@@ -54,6 +54,7 @@ def save_frame(frame):
 
 
 class Colors:
+    # easy to segment colours
     Black = 0
     Red = 1
     Yellow = 2
@@ -80,7 +81,7 @@ class Colors:
     
     @staticmethod
     def get_hsv(color):
-        if color == Colors.Black: return 0, 0, 0
+        if color == Colors.Black: return 0, 0, 255  # white for debugging
         if color == Colors.Red: return 0, 255, 255
         if color == Colors.Yellow: return 30, 255, 255
         if color == Colors.Green: return 60, 255, 255
@@ -102,11 +103,12 @@ class Colors:
         if sat < 30 or value < 100:
             return Colors.Black
         
+        # empirically determined
         if inn(hue, 0, 17) or inn(hue, 153, 180):
             return Colors.Red
-        if inn(hue, 17, 40):
+        if inn(hue, 17, 35):
             return Colors.Yellow
-        if inn(hue, 40, 84):
+        if inn(hue, 35, 84):
             return Colors.Green
         if inn(hue, 84, 115):
             return Colors.Blue_aqua

@@ -3,6 +3,7 @@ import cv2
 import random
 from skimage import morphology
 from Settings import Settings
+import math
 
 # img is a raw color image. find_edges returns a binary image where white
 # is edge.
@@ -42,6 +43,7 @@ def find_paper(img):
 
 # img is the raw color image. paper is the contour with four-points that
 # outlines the paper in img.
+# TODO still unstable. may not find borders. may not find correct orientation (upside down)
 def extract_paper(img, paper, is_upside_down = True):
     assert len(paper) == 4
     # Ensure that paper coordinates are specified clockwise.
@@ -96,6 +98,22 @@ def binarize_ink(img):
     # picked up as ink.
     binarized = delete_margins_from_binary_image(binarized)
     return binarized
+
+
+def binarize_ink_IMPROVED(grey):
+    stroke_width_px_int = int( math.ceil( Settings.STROKE_WIDTH_MM * Settings.PIXELS_PER_MM ) )
+    # Size of a pixel neighborhood that is used to calculate a threshold value
+    blockSize = stroke_width_px_int * 25
+    noise_reduction = 25
+    def uneven(x): return x + x % 2 + 1
+    # http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html
+    binarized = cv2.adaptiveThreshold(
+        grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,
+        uneven(blockSize), noise_reduction
+    )
+    filtered = remove_noise_from_binary_image(binarized)
+    filtered = delete_margins_from_binary_image(filtered)
+    return filtered
 
 
 def white_balance(inimg, randomPoolSize = 100, selectionPoolSize = 20):
@@ -155,3 +173,13 @@ def remove_noise_from_binary_image(binary_image):
     # flood fill small blobs with black
     cv2.drawContours(binary_image, small_blobs, -1, 0, thickness=-1)
     return binary_image
+
+
+def convert_hsv_image_to_greyscale_emphasising_saturation(hsv):
+    # problem: normal cv2.COLOR_BGR2GRAY converts to a very light grey for, say, yellow strokes
+    # grey = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2GRAY)
+    # convert to grey emphasising saturation!
+    hsv_factors = [0, -2, 1]
+    mat = np.array(hsv_factors).reshape((1,3))
+    myGrey = cv2.transform(hsv, mat)
+    return myGrey

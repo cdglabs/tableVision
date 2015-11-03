@@ -6,13 +6,11 @@ import glob
 import math
 import infrastructure.helper as helper
 
-# TODO: output as live cv2 tiled images
 
 _out_method = "silent"
 _out_count = 0
 _out_prefix = "out"
 _windows = []
-
 
 def to_int(x):
     if hasattr(x, '__iter__'):
@@ -21,7 +19,7 @@ def to_int(x):
         return int(x)
 
 
-def image(background=None, width=800, height=600,
+def image(background=None, width=800, height=600, # TODO width and height correct?
           contours=[], points=[], lines=[], pixels=[], circles=[], graph=None):
     global _out_count
     if _out_method == "silent":
@@ -32,7 +30,7 @@ def image(background=None, width=800, height=600,
         img = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
     else:
         img = background.copy()
-
+    
     def get_color_from_node(node, default_color=(0,0,255)):
         if graph is not None and 'color' in graph.node[node]:
             return helper.Colors.get_rgb(graph.node[node]['color'])
