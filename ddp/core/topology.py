@@ -101,8 +101,6 @@ def produce_graph(skeleton_img, hsv_image = None):
     """Takes in a skeletonized image (with foreground as 255 and background as
     0) and produces a graph of appropriately connected pixel locations.
     """
-    reload(helper)
-    
     graph = nx.Graph()
     (rows, cols) = skeleton_img.shape
     for y in xrange(rows):

@@ -1,8 +1,9 @@
 import os
 from sys import platform
 import cv2
+import numpy as np
+from Settings import Settings
 
-_default_cam_no = 0
 
 def get_free_filename(ext="jpg"):
     dir = os.getcwd()
@@ -27,7 +28,7 @@ def take_picture_from_camera():
     return file
 
 
-def get_webcam_capture(camNo=_default_cam_no):
+def get_webcam_capture(camNo=Settings.DEFAULT_CAM_NO):
     cap = cv2.VideoCapture(camNo)
     # resolution
     cap.set(3, 2592)
@@ -35,7 +36,7 @@ def get_webcam_capture(camNo=_default_cam_no):
     return cap
 
 
-def take_picture_from_webcam(camNo=_default_cam_no):
+def take_picture_from_webcam(camNo=Settings.DEFAULT_CAM_NO):
     cap = get_webcam_capture(camNo)
     # take 3, because the first couple may be screwed
     cap.read()
@@ -61,13 +62,30 @@ class Colors:
     Violett = 5
     
     @staticmethod
+    def rgb2hsv((r,g,b)):
+        return Colors.convert_color([r,g,b], cv2.COLOR_RGB2HSV)
+        
+    @staticmethod
+    def hsv2rgb((h,s,v)):
+        return Colors.convert_color([h,s,v], cv2.COLOR_HSV2RGB)
+    
+    # slow? perhaps use import colorsys instead?
+    @staticmethod
+    def convert_color(color, cv2flag):
+        return tuple(cv2.cvtColor(np.uint8([[color]]), cv2flag)[0][0])
+    
+    @staticmethod
     def get_rgb(color):
-        if color == Colors.Black: return (255,255,255)
-        if color == Colors.Red: return (255,0,0)
-        if color == Colors.Yellow: return (255,255,0)
-        if color == Colors.Green: return (0,255,0)
-        if color == Colors.Blue_aqua: return (0,0,255)
-        if color == Colors.Violett: return (255,0,255)
+        return Colors.hsv2rgb(Colors.get_hsv(color))
+    
+    @staticmethod
+    def get_hsv(color):
+        if color == Colors.Black: return 0, 0, 0
+        if color == Colors.Red: return 0, 255, 255
+        if color == Colors.Yellow: return 30, 255, 255
+        if color == Colors.Green: return 60, 255, 255
+        if color == Colors.Blue_aqua: return 90, 255, 255
+        if color == Colors.Violett: return 150, 255, 255
         assert False, "fell through"
 
     @staticmethod
@@ -75,6 +93,8 @@ class Colors:
         def inn(x, low, high):
             return low <= x and x < high
         
+        # theoretical color centers:
+        # {'red': 0, 'yellow': 30, 'green': 60, 'aqua': 90, 'blue': 120, 'violett': 150}
         assert inn(hue, 0, 180)
         assert inn(sat, 0, 256)
         assert inn(value, 0, 256)
@@ -94,3 +114,4 @@ class Colors:
             return Colors.Violett
         
         assert False, "fell through"
+    

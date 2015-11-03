@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import random
 from skimage import morphology
-
+from Settings import Settings
 
 # img is a raw color image. find_edges returns a binary image where white
 # is edge.
@@ -58,12 +58,8 @@ def extract_paper(img, paper, is_upside_down = True):
     
     paper = paper.astype(np.float32)
     
-    # US Letter: 8.5 by 11 inches
-    paper_long_side_mm = 279.4
-    paper_short_side_mm = 215.9
-    pixels_per_mm = 5
-    w = int(paper_long_side_mm * pixels_per_mm)
-    h = int(paper_short_side_mm * pixels_per_mm)
+    w = int(Settings.PAPER_LONG_SIDE_MM * Settings.PIXELS_PER_MM)
+    h = int(Settings.PAPER_SHORT_SIDE_MM * Settings.PIXELS_PER_MM)
     model_paper_normal = [ (0,0), (w,0), (w,h), (0,h) ]
     model_paper_upside_down = [ (w,h), (0,h), (0,0), (w,0) ]
     model_paper = model_paper_upside_down if is_upside_down else model_paper_normal

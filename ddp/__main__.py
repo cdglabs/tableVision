@@ -54,22 +54,14 @@ import infrastructure.intake as intake
 import infrastructure.helper as helper
 import signal
 import sys
-
-# constants
-method_name_to_run = "run"
-
-# variables
-frame = None
-capture = None
-pipeline_name = None
+from Settings import Settings
 
 
-def run_once(module_to_run, options):
-    global frame, method_name_to_run, capture
+def run_once(module_to_run, options, frame, capture):
     module_to_run = reload(module_to_run)
     if options.image_source == "webcamStream":
         _, frame = capture.read()
-    getattr(module_to_run, method_name_to_run)(frame)
+    getattr(module_to_run, Settings.METHOD_NAME_TO_RUN)(frame)
 
     log.finish_log_cycle()
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -77,7 +69,6 @@ def run_once(module_to_run, options):
 
 
 def main():
-    global frame, capture, pipeline_name
     parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
     parser.add_option("--pipeline", default='full_process', type='string', action="store", dest="pipeline",
         help="any file name from ./pipeline (written without '.py')")
@@ -88,10 +79,13 @@ def main():
 
     (options, args) = parser.parse_args()
 
+    frame = None
+    capture = None
     pipeline_name = options.pipeline
     pipeline = importlib.import_module("pipeline." + pipeline_name)
-    assert hasattr(pipeline, method_name_to_run), "module has to have "+method_name_to_run+" method"
-
+    assert hasattr(pipeline, Settings.METHOD_NAME_TO_RUN),\
+        "module has to have " + Settings.METHOD_NAME_TO_RUN + " method"
+    
     log.clear_log_directory()
     log.set_file_prefix(pipeline_name)
 
@@ -124,13 +118,13 @@ def main():
     signal.signal(signal.SIGINT, close)
     
     if options.interactive:
-        # TODO reload only reloads the immediate file, not its dependencies
+        # reload only reloads the immediate file, not its dependencies
         pipeline = reload(pipeline)
         while True:
-            if run_once(pipeline, options):
+            if run_once(pipeline, options, frame, capture):
                 break
     else:
-        run_once(pipeline, options)
+        run_once(pipeline, options, frame, capture)
 
     close()
 
