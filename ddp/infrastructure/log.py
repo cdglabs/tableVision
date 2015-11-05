@@ -5,12 +5,16 @@ import os
 import glob
 import math
 import infrastructure.helper as helper
+import time
+import datetime
 
 
 _out_method = "silent"
 _out_count = 0
 _out_prefix = "out"
 _windows = []
+_log_base_dir = "log/"
+_log_dir_instance = None
 
 def to_int(x):
     if hasattr(x, '__iter__'):
@@ -21,7 +25,7 @@ def to_int(x):
 
 def image(background=None, width=800, height=600, # TODO width and height correct?
           contours=[], points=[], lines=[], pixels=[], circles=[], graph=None):
-    global _out_count
+    global _out_count, _log_base_dir, _log_dir_instance
     if _out_method == "silent":
         return
     if background is None:
@@ -50,6 +54,12 @@ def image(background=None, width=800, height=600, # TODO width and height correc
     for (center, radius) in circles:
         cv2.circle(img, to_int(center), to_int(radius), (0,255,0), 2)
     
+    if _log_dir_instance is None:
+        ts = time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H.%M.%S')
+        _log_dir_instance = _log_base_dir + st + "/"
+        if not os.path.exists(_log_dir_instance):
+            os.makedirs(_log_dir_instance)
     
     if _out_method == "file":
         file_name = generate_file_name("png")
@@ -82,13 +92,15 @@ def set_file_prefix(file_prefix):
 
 
 def clear_log_directory():
-    files = glob.glob("log/*")
+    global _log_base_dir
+    files = glob.glob(_log_base_dir + "*")
     for f in files:
         os.remove(f)
 
 
 def generate_file_name(file_extension):
-    return "log/" + _out_prefix + str(_out_count).rjust(3, "0") + "." + file_extension
+    global _log_dir_instance
+    return _log_dir_instance + _out_prefix + str(_out_count).rjust(3, "0") + "." + file_extension
 
 
 def finish_log_cycle():

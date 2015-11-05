@@ -86,7 +86,7 @@ def main():
     assert hasattr(pipeline, Settings.METHOD_NAME_TO_RUN),\
         "module has to have " + Settings.METHOD_NAME_TO_RUN + " method"
     
-    log.clear_log_directory()
+    # log.clear_log_directory()
     log.set_file_prefix(pipeline_name)
 
     if options.image_source == "webcamStream":

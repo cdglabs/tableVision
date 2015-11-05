@@ -15,21 +15,24 @@ from Settings import Settings
 
 
 def run(img):
-    # log.image(img)
+    log.image(img)
     extracted = extract_paper(img, logOn=False)
     white_balanced_image = vision.white_balance(extracted)
-    # log.image(white_balanced_image)
+    log.image(white_balanced_image)
     hsv = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
     grey = vision.convert_hsv_image_to_greyscale_emphasising_saturation(hsv)
     binarized = vision.binarize_ink_IMPROVED(grey)
     log.image(binarized)
+    # print white_balanced_image.shape
     
     skeleton = vision.skeletonize(binarized)
     log.image(skeleton)
     
     graph = topology.produce_graph(skeleton, hsv_image=hsv)
     log.image(
-        background=white_balanced_image,
+        # background=white_balanced_image,
+        width=white_balanced_image.shape[1],
+        height=white_balanced_image.shape[0],
         pixels=graph.nodes(),
         graph=graph
     )
