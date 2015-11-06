@@ -12,6 +12,7 @@ from pipeline.extract_paper import run as extract_paper
 from pipeline.sketch_graph import run as sketch_graph
 from pipeline.hv_lines import run as hv_lines
 from Settings import Settings
+import core.satisfaction as satisfaction
 
 
 def run(img):
@@ -36,6 +37,50 @@ def run(img):
         pixels=graph.nodes(),
         graph=graph
     )
+    
+    graph = topology.simplify_junctures(graph)
+    log.image(
+        width=white_balanced_image.shape[1],
+        height=white_balanced_image.shape[0],
+        pixels=graph.nodes(),
+        # lines=graph.edges(),
+        graph=graph
+    )
+    
+    mygraph, constraint_junctions = topology.find_same_length_constraints(graph)
+    log.image(
+        width=white_balanced_image.shape[1],
+        height=white_balanced_image.shape[0],
+        points=constraint_junctions,
+        lines=mygraph.edges(),
+        graph=mygraph
+    )
+    
+    graph = topology.simplify_paths(graph)
+    log.image(
+        width=white_balanced_image.shape[1],
+        height=white_balanced_image.shape[0],
+        points=graph.nodes(),
+        lines=graph.edges()
+    )
+    
+    graph = topology.hv_lines(graph)
+    log.image(
+        background=white_balanced_image,
+        points=graph.nodes(),
+        lines=graph.edges()
+    )
+
+    graph = satisfaction.align(graph)
+    log.image(
+        background=white_balanced_image,
+        points=graph.nodes(),
+        lines=graph.edges()
+    )
+    
+    satisfaction.apply_same_length_constraint(graph)
+    
+    
     
     
 

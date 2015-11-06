@@ -1,4 +1,5 @@
 import networkx as nx
+import core.topology as topology
 
 
 def is_horizontal_line((x1, y1), (x2, y2)):
@@ -54,3 +55,33 @@ def align_vertical(graph):
 def align(graph):
     return align_vertical(align_horizontal(graph))
 
+
+def apply_same_length_constraint(graph):
+    same_length_dict = {}
+    for edge in graph.edges():
+        edge_attr = graph.get_edge_data(*edge)
+        if "same_length_strokes" in edge_attr:
+            stroke_through_count = edge_attr["same_length_strokes"]
+            if stroke_through_count > 0:
+                if stroke_through_count in same_length_dict:
+                    same_length_dict[stroke_through_count].append(edge)
+                else:
+                    same_length_dict[stroke_through_count] = [edge]
+    
+    print same_length_dict
+    relabel = {}
+    for edges_of_same_length in same_length_dict.values():
+        average_length = 0
+        for (n1, n2) in edges_of_same_length:
+            average_length += topology.distance(n1, n2)
+        average_length /= len(edges_of_same_length)
+        
+        print average_length
+        
+        # edges_of_same_length = ""
+        
+        # for ((n1x, n1y), (n2x, n2y)) in edges_of_same_length:
+        #     relabel[(n1x, n1y)] = (averageX, y)
+        #     relabel[(n1x, n1y)] = (averageX, y)
+    
+        # nx.relabel_nodes(graph, relabel)

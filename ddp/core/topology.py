@@ -123,13 +123,18 @@ def produce_graph(skeleton_img, hsv_image = None):
 
 
 def find_junctures(graph):
-    """Returns all nodes that are "junctures", that is, have less than 2 or
-    more than 2 edges.
-    """
+    return find_nodes_with_degree(graph, lambda degree: degree != 2)
+
+
+def find_termination_junctures(graph):
+    return find_nodes_with_degree(graph, lambda degree: degree == 1)
+
+
+def find_nodes_with_degree(graph, filter_function):
     junctures = []
     for node in nx.nodes_iter(graph):
         degree = nx.degree(graph, node)
-        if degree != 2:
+        if filter_function(degree):
             junctures.append(node)
     return junctures
 
@@ -146,6 +151,60 @@ def find_clumps(graph, epsilon):
         if quadrance(i, j) < max_quadrance:
             clump_graph.add_edge(i, j)
     return nx.connected_components(clump_graph)
+
+
+def get_path_color(graph, path):
+    color_occurrence = {}
+    for node in path:
+        if 'color' in graph.node[node]:
+            color = graph.node[node]['color']
+            if color not in color_occurrence:
+                color_occurrence[color] = 1
+            else:
+                color_occurrence[color] += 1
+    
+    if len(color_occurrence) == 0:
+        return helper.Colors.Black
+    return max(color_occurrence)
+
+
+def find_same_length_constraints(graph):
+    # find_paths from t-junctions!
+    termination_junctures = find_termination_junctures(graph)
+    paths_from_t_junctures = find_paths_from_junctures(graph, termination_junctures)
+    
+    constraint_junctions = []
+    for (p1, p2) in itertools.combinations(paths_from_t_junctures, 2):
+        last_node_p1 = p1[len(p1)-1]
+        last_node_p2 = p2[len(p2)-1]
+        path_end_degree = nx.degree(graph, last_node_p1)
+        color_p1 = get_path_color(graph, p1)
+        color_p2 = get_path_color(graph, p2)
+        if last_node_p1 == last_node_p2 and color_p1 == color_p2 and path_end_degree == 4:
+            print "found same length constraint!"
+            constraint_junctions.append(last_node_p1)
+            graph.node[last_node_p1]["constraint"] = "same_length"
+    
+    mygraph = nx.Graph()
+    for path in paths_from_t_junctures:
+        path_color = get_path_color(graph, path)
+        start = path[0]
+        end = path[len(path)-1]
+        mygraph.add_node(start, {'color': path_color})
+        mygraph.add_node(end, {'color': path_color})
+        mygraph.add_edge(start, end, {'color': path_color})
+        
+        if path_color != helper.Colors.Black:
+            for i in range(len(path)):
+                # do not delete path end juncture if it implements a constraint
+                node = path[i]
+                if i != len(path)-1 and "constraint" not in graph.node[node]:
+                    graph.remove_node(node)
+                else:
+                    print "left constraint juncture in place"
+    
+    return mygraph, constraint_junctions
+    
 
 
 def simplify_junctures(graph, epsilon=5):
@@ -186,6 +245,10 @@ def simplify_junctures(graph, epsilon=5):
 
 
 def find_paths(graph):
+    return find_paths_from_junctures(graph, find_junctures(graph))
+
+
+def find_paths_from_junctures(graph, junctures):
     """Returns a list of paths between junctures. Each path is a list of
     nodes. The first and last node in the path is a juncture, and each
     intermediate node in the path is a bridge.
@@ -195,7 +258,6 @@ def find_paths(graph):
     # are not connected to any junctures. Or perhaps there should be a
     # separate function for finding cyclical paths.
 
-    junctures = find_junctures(graph)
     paths = []
     visited_nodes = set([])
 
@@ -237,12 +299,17 @@ def simplify_paths(graph, epsilon=3):
     for path in paths:
         simplified_path = rdp(path, epsilon)
         # Delete original path.
+        edge_attributes = {"same_length_strokes": 0}
         for index, node in enumerate(path):
+            if "constraint" in graph.node[node] and graph.node[node]["constraint"] == "same_length":
+                edge_attributes["same_length_strokes"] += 1
+                print "added strokes", edge_attributes["same_length_strokes"]
+            
             if index == 0 or index == len(path)-1:
                 continue
             graph.remove_node(node)
         for (a, b) in pairwise(simplified_path):
-            graph.add_edge(a, b)
+            graph.add_edge(a, b, edge_attributes)
     return graph
 
 
@@ -260,12 +327,26 @@ def get_bridge_ends(graph, node):
     p2 = neighbors[1]
     return (p1, p2)
 
+
+def merge_attributes(dict1, dict2):
+    for key in dict2:
+        if key in dict1:
+            dict1[key] += dict2[key]
+        else:
+            dict1[key] = dict2[key]
+    return dict1
+
+
 def remove_bridge(graph, node):
     """Mutates graph. Assumes node is a bridge (has 2 edges). Removes bridge
     node and connects either side of the bridge to each other."""
     (p1, p2) = get_bridge_ends(graph, node)
+    # preserve constraints from old edges to new edge
+    edge1attributes = graph.get_edge_data(p1, node)
+    edge2attributes = graph.get_edge_data(p2, node)
+    
     graph.remove_node(node)
-    graph.add_edge(p1, p2)
+    graph.add_edge(p1, p2, merge_attributes(edge1attributes, edge2attributes))
 
 
 def hv_lines(graph):

@@ -63,12 +63,13 @@ class Colors:
     Violett = 5
     
     @staticmethod
-    def rgb2hsv((r,g,b)):
-        return Colors.convert_color([r,g,b], cv2.COLOR_RGB2HSV)
+    def rgb2hsv((r,g,b)): return Colors.convert_color([r,g,b], cv2.COLOR_RGB2HSV)
         
     @staticmethod
-    def hsv2rgb((h,s,v)):
-        return Colors.convert_color([h,s,v], cv2.COLOR_HSV2RGB)
+    def hsv2rgb((h,s,v)): return Colors.convert_color([h,s,v], cv2.COLOR_HSV2RGB)
+    
+    @staticmethod
+    def hsv2bgr((h,s,v)): return Colors.convert_color([h,s,v], cv2.COLOR_HSV2BGR)
     
     # slow? perhaps use import colorsys instead?
     @staticmethod
@@ -76,8 +77,10 @@ class Colors:
         return tuple(cv2.cvtColor(np.uint8([[color]]), cv2flag)[0][0])
     
     @staticmethod
-    def get_rgb(color):
-        return Colors.hsv2rgb(Colors.get_hsv(color))
+    def get_rgb(color): return Colors.hsv2rgb(Colors.get_hsv(color))
+    
+    @staticmethod
+    def get_bgr(color): return Colors.hsv2bgr(Colors.get_hsv(color))
     
     @staticmethod
     def get_hsv(color):
@@ -106,9 +109,9 @@ class Colors:
         # empirically determined
         if inn(hue, 0, 17) or inn(hue, 153, 180):
             return Colors.Red
-        if inn(hue, 17, 35):
+        if inn(hue, 17, 38):
             return Colors.Yellow
-        if inn(hue, 35, 84):
+        if inn(hue, 38, 84):
             return Colors.Green
         if inn(hue, 84, 115):
             return Colors.Blue_aqua
@@ -116,4 +119,20 @@ class Colors:
             return Colors.Violett
         
         assert False, "fell through"
+    
+    @staticmethod
+    def get_color_from_node_in_rgb(graph, node, default_color=(0,0,255)):
+        if graph is not None:
+            node = graph.node[node]
+            if 'color' in node:
+                return Colors.get_rgb(node['color'])
+        return default_color
+    
+    @staticmethod
+    def get_color_from_edge_in_bgr(graph, (p1, p2), default_color=(0,0,255)):
+        if graph is not None:
+            edge = graph.get_edge_data(p1, p2)
+            if 'color' in edge:
+                return Colors.get_bgr(edge['color'])
+        return default_color
     

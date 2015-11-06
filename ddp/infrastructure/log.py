@@ -35,33 +35,27 @@ def image(background=None, width=800, height=600, # TODO width and height correc
     else:
         img = background.copy()
     
-    def get_color_from_node(node, default_color=(0,0,255)):
-        if graph is not None and 'color' in graph.node[node]:
-            return helper.Colors.get_rgb(graph.node[node]['color'])
-        return default_color
-    
     cv2.drawContours(img, contours, -1, (0,100,255), 2)
-    for point in pixels:
-        (x,y) = point
-        (r,g,b) = get_color_from_node(point, (0,0,255))
-        # BGR
-        img[to_int(y),to_int(x)] = np.uint8([b,g,r])
     for (p1, p2) in lines:
-        cv2.line(img, to_int(p1), to_int(p2), (0,255,0), 2)
+        color = helper.Colors.get_color_from_edge_in_bgr(graph, (p1, p2))
+        cv2.line(img, to_int(p1), to_int(p2), to_int(color), 2)
+    for point in pixels:
+        (x, y) = point
+        (r, g, b) = helper.Colors.get_color_from_node_in_rgb(graph, point, (0,0,255))
+        img[to_int(y), to_int(x)] = np.uint8([b, g, r])
     for point in points:
-        color = get_color_from_node(point, (0,0,255))
-        cv2.circle(img, to_int(point), 4, color, -1)
+        color = helper.Colors.get_color_from_node_in_rgb(graph, point, (0,0,255))
+        cv2.circle(img, to_int(point), 1, to_int(color), -1)
     for (center, radius) in circles:
         cv2.circle(img, to_int(center), to_int(radius), (0,255,0), 2)
     
-    if _log_dir_instance is None:
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H.%M.%S')
-        _log_dir_instance = _log_base_dir + st + "/"
-        if not os.path.exists(_log_dir_instance):
-            os.makedirs(_log_dir_instance)
-    
     if _out_method == "file":
+        if _log_dir_instance is None:
+            ts = time.time()
+            st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H.%M.%S')
+            _log_dir_instance = _log_base_dir + st + "/"
+            if not os.path.exists(_log_dir_instance):
+                os.makedirs(_log_dir_instance)
         file_name = generate_file_name("png")
         cv2.imwrite(file_name, img)
     if _out_method == "stream":
