@@ -55,14 +55,17 @@ import infrastructure.helper as helper
 import signal
 import sys
 from Settings import Settings
-
+import traceback
 
 def run_once(module_to_run, options, frame, capture):
     module_to_run = reload(module_to_run)
     if options.image_source == "webcamStream":
         _, frame = capture.read()
-    getattr(module_to_run, Settings.METHOD_NAME_TO_RUN)(frame)
-
+    try:
+        getattr(module_to_run, Settings.METHOD_NAME_TO_RUN)(frame)
+    except:
+        traceback.print_exc()
+        return True
     log.finish_log_cycle()
     if cv2.waitKey(1) & 0xFF == ord('q'):
         return True  # break

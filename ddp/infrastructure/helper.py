@@ -53,6 +53,17 @@ def save_frame(frame):
     return file
 
 
+def grey2hsv(grey):
+    # cv2.COLOR_GRAY2HSV does not exist. do it manually by copying grey to value in hsv
+    # img = cv2.cvtColor(background, cv2.COLOR_GRAY2HSV)
+    assert len(grey.shape) == 2
+    height, width = grey.shape
+    grey = np.expand_dims(grey, axis=2)
+    img = np.zeros((height, width, 2), dtype=np.uint8)
+    img = np.append(img, grey, axis=2)
+    return img
+
+
 class Colors:
     # easy to segment colours
     Black = 0
@@ -121,18 +132,18 @@ class Colors:
         assert False, "fell through"
     
     @staticmethod
-    def get_color_from_node_in_rgb(graph, node, default_color=(0,0,255)):
+    def get_color_from_node_in_hsv(graph, node, default_color=(60, 255, 255)):
         if graph is not None:
             node = graph.node[node]
             if 'color' in node:
-                return Colors.get_rgb(node['color'])
+                return Colors.get_hsv(node['color'])
         return default_color
     
     @staticmethod
-    def get_color_from_edge_in_bgr(graph, (p1, p2), default_color=(0,0,255)):
+    def get_color_from_edge_in_hsv(graph, (p1, p2), default_color=(0, 255, 255)):
         if graph is not None:
             edge = graph.get_edge_data(p1, p2)
             if 'color' in edge:
-                return Colors.get_bgr(edge['color'])
+                return Colors.get_hsv(edge['color'])
         return default_color
     

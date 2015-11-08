@@ -2,17 +2,23 @@ import infrastructure.intake as intake
 import infrastructure.log as log
 
 import core.vision as vision
+import numpy as np
+import cv2
 
 
 def run(img, logOn=True):
-    edges = vision.find_edges(img)
-    if logOn: log.image(background=edges)
-
+    white_balanced_image = vision.white_balance(img)
+    hsv = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
+    if logOn: log.hsvOrGreyImage(hsv)
+    
+    edges = vision.find_edges(hsv)
+    if logOn: log.hsvOrGreyImage(edges)
+    
     paper_contour = vision.find_paper(edges)
-    if logOn: log.image(background=img, contours=[paper_contour])
-
-    extracted = vision.extract_paper(img, paper_contour)
-    if logOn: log.image(background=extracted)
+    if logOn: log.hsvOrGreyImage(hsv, contours=[paper_contour])
+    
+    extracted = vision.extract_paper(hsv, paper_contour)
+    if logOn: log.hsvOrGreyImage(extracted)
     
     return extracted
 

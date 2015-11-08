@@ -6,15 +6,15 @@ import core.topology as topology
 
 
 def run(img):
-    ink = vision.binarize_ink(img)
-    log.image(background=ink)
+    img = vision.convert_hsv_image_to_greyscale_emphasising_saturation(img)
+    ink = vision.binarize_ink_IMPROVED(img)
+    log.bgrOrGreyImage(ink)
 
     skeleton = vision.skeletonize(ink)
-    log.image(background=skeleton)
+    log.bgrOrGreyImage(skeleton)
 
     graph = topology.produce_graph(skeleton)
-    log.image(
-        background=img,
+    log.hsvOrGreyImage(img,
         pixels=graph.nodes()
     )
     log.gpickle(graph)

@@ -23,7 +23,7 @@ def run(img):
         for component in components
     ]
 
-    log.image(img, circles=circles)
+    log.hsvOrGreyImage(img, circles=circles)
 
     svg = printer.circles_to_svg(circles)
     printer.write_file("log/out.svg", svg)

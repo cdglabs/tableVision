@@ -7,33 +7,26 @@ import core.topology as topology
 import core.satisfaction as satisfaction
 
 
-def run(graph, background=None):
-    if background is None:
-        background = np.zeros((850,1100,3), np.uint8)
-
+def run(graph, img):
     graph = topology.simplify_junctures(graph)
-    log.image(
-        background=background,
+    log.hsvOrGreyImage(img,
         points=(node for node in graph.nodes() if graph.degree(node) != 2)
     )
 
     graph = topology.simplify_paths(graph)
-    log.image(
-        background=background,
+    log.hsvOrGreyImage(img,
         points=graph.nodes(),
         lines=graph.edges()
     )
 
     graph = topology.hv_lines(graph)
-    log.image(
-        background=background,
+    log.hsvOrGreyImage(img,
         points=graph.nodes(),
         lines=graph.edges()
     )
 
     graph = satisfaction.align(graph)
-    log.image(
-        background=background,
+    log.hsvOrGreyImage(img,
         points=graph.nodes(),
         lines=graph.edges()
     )
