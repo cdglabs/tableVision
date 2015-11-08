@@ -84,19 +84,23 @@ def is_colinear(points):
 def get_neighborhood(path, index, direction, neighborhood):
     """Finds the neighborhood of points around path[index].
 
-    This includes the point (path[index]) itself.
+    That is, all the points that are within neighborhood distance (measured as
+    path length) from the point in question (path[index]). This includes the
+    point itself.
 
     We look at the points on the path before the point (if direction is -1) or
     after the point (if direction is 1), and we return the points that are
     within neighborhood distance of the point.
     """
-    max_quadrance = neighborhood ** 2
-    origin = path[index]
-    result = [origin]
+    path_length = 0
+    result = [path[index]]
     index += direction
     while 0 <= index < len(path):
         point = path[index]
-        if quadrance(point, origin) > max_quadrance:
+        prev_point = path[index - direction]
+        step_distance = distance(prev_point, point)
+        path_length += step_distance
+        if path_length > neighborhood:
             break
         result.append(point)
         index += direction
@@ -151,8 +155,8 @@ def corner_score(path, index, neighborhood):
     The corner score is the difference between pi (180 degrees) and this
     angle. The higher the score, the more likely the point is a sharp corner.
     """
-    if index < 6 or index >= len(path) - 6:
-        # If there are fewer than 6 points before or after the point, we don't
+    if index < 10 or index >= len(path) - 10:
+        # If there are fewer than 10 points before or after the point, we don't
         # have good enough information to tell that it's a corner, so we
         # return a corner score of 0.
         return 0
@@ -162,38 +166,72 @@ def corner_score(path, index, neighborhood):
     return math.pi - a
 
 
+def extremeness_score(path, index, neighborhood):
+    """How extreme is the point at path[index].
+
+    This is computed by looking at the neighborhood of points and seeing how
+    towards-one-side these points are.
+
+    The higher the score, the more extreme is the point in question.
+    """
+    origin = path[index]
+
+    before_points = get_neighborhood(path, index, -1, neighborhood)
+    after_points = get_neighborhood(path, index, 1, neighborhood)
+
+    # Ensure that before_points and after_points have the same number of
+    # points, otherwise the score will get skewed towards whichever side has
+    # more points!
+    length = min(len(before_points), len(after_points))
+    before_points = before_points[0:length]
+    after_points = after_points[0:length]
+
+    total = (0,0)
+    for point in before_points + after_points:
+        d = sub(point, origin)
+        if not (d[0] == 0 and d[1] == 0):
+            total = add(total, normalize(d))
+
+    (x,y) = total
+    return x**2 + y**2
 
 
-
-
-def find_corners(path, neighborhood=16, angle_tolerance=math.pi/5):
+def find_corners(path, neighborhood=22, angle_tolerance=math.pi/5):
     corners = []
 
     # for (index, point) in enumerate(path):
     #     if corner_score(path, index, neighborhood) > angle_tolerance:
     #         corners.append(point)
+    # return corners
 
-    corner_scores = [
-        corner_score(path, index, neighborhood)
-        for (index, point) in enumerate(path)
-    ]
+    corner_scores = []
+    extremeness_scores = []
+    for (index, point) in enumerate(path):
+        c = corner_score(path, index, neighborhood)
+        corner_scores.append(c)
+        if c > angle_tolerance:
+            e = extremeness_score(path, index, neighborhood)
+            extremeness_scores.append(e)
+        else:
+            extremeness_scores.append(0)
 
     for (index, score) in enumerate(corner_scores):
         if score > angle_tolerance:
             # To count as a corner, the corner score needs to be the highest
-            # in its neighborhood.
+            # extremeness score in its neighborhood.
             before_points = get_neighborhood(path, index, -1, neighborhood)
             after_points = get_neighborhood(path, index, 1, neighborhood)
             start_index = index - len(before_points) + 1
             end_index = index + len(after_points) - 1
 
+            extremeness = extremeness_scores[index]
             is_highest = True
             for neighbor_index in range(start_index, end_index+1):
-                neighbor_score = corner_scores[neighbor_index]
-                if neighbor_score > score:
+                neighbor_extremeness = extremeness_scores[neighbor_index]
+                if neighbor_extremeness > extremeness:
                     is_highest = False
                     break
-                if neighbor_score == score and neighbor_index < index:
+                if neighbor_extremeness == extremeness and neighbor_index < index:
                     # We tie break in favor of the earlier corner.
                     is_highest = False
                     break
@@ -206,23 +244,4 @@ def find_corners(path, neighborhood=16, angle_tolerance=math.pi/5):
 
 
 
-
-# def find_corners_curved(path, epsilon=3):
-
-
-
-def laplacian_smooth(path, amount):
-    smoothed = [path[0]]
-    for ((ax,ay), (bx,by), (cx,cy)) in triplewise(path):
-        smoothed.append((
-            bx * (1-amount) + (ax + cx) * 0.5 * amount,
-            by * (1-amount) + (ay + cy) * 0.5 * amount
-        ))
-    smoothed.append(path[len(path)-1])
-    return smoothed
-
-def iterated_laplacian_smooth(path, amount, iterations):
-    for i in range(0, iterations):
-        path = laplacian_smooth(path, amount)
-    return path
 
