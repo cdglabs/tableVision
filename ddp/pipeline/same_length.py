@@ -16,64 +16,52 @@ import core.satisfaction as satisfaction
 
 
 def run(img):
-    log.image(img)
-    extracted = extract_paper(img, logOn=False)
-    white_balanced_image = vision.white_balance(extracted)
-    log.image(white_balanced_image)
-    hsv = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
+    log.bgrOrGreyImage(img)
+    hsv = extract_paper(img, logOn=False)
+    log.hsvOrGreyImage(hsv)
     grey = vision.convert_hsv_image_to_greyscale_emphasising_saturation(hsv)
     binarized = vision.binarize_ink_IMPROVED(grey)
-    log.image(binarized)
-    # print white_balanced_image.shape
+    log.hsvOrGreyImage(binarized)
     
     skeleton = vision.skeletonize(binarized)
-    log.image(skeleton)
+    log.hsvOrGreyImage(skeleton)
+    
+    black = np.zeros((hsv.shape[0], hsv.shape[1], 3), dtype=np.uint8)
     
     graph = topology.produce_graph(skeleton, hsv_image=hsv)
-    log.image(
-        # background=white_balanced_image,
-        width=white_balanced_image.shape[1],
-        height=white_balanced_image.shape[0],
+    log.hsvOrGreyImage(black,
         pixels=graph.nodes(),
         graph=graph
     )
     
     graph = topology.simplify_junctures(graph)
-    log.image(
-        width=white_balanced_image.shape[1],
-        height=white_balanced_image.shape[0],
+    log.hsvOrGreyImage(black,
         pixels=graph.nodes(),
         # lines=graph.edges(),
         graph=graph
     )
     
     mygraph, constraint_junctions = topology.find_same_length_constraints(graph)
-    log.image(
-        width=white_balanced_image.shape[1],
-        height=white_balanced_image.shape[0],
+    log.hsvOrGreyImage(black,
         points=constraint_junctions,
         lines=mygraph.edges(),
         graph=mygraph
     )
     
     graph = topology.simplify_paths(graph)
-    log.image(
-        width=white_balanced_image.shape[1],
-        height=white_balanced_image.shape[0],
+    log.hsvOrGreyImage(black,
         points=graph.nodes(),
         lines=graph.edges()
     )
     
     graph = topology.hv_lines(graph)
-    log.image(
-        background=white_balanced_image,
+    log.hsvOrGreyImage(hsv,
         points=graph.nodes(),
         lines=graph.edges()
     )
-
+    
     graph = satisfaction.align(graph)
-    log.image(
-        background=white_balanced_image,
+    log.hsvOrGreyImage(hsv,
         points=graph.nodes(),
         lines=graph.edges()
     )

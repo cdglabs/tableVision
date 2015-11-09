@@ -9,7 +9,7 @@ from pipeline.hv_lines import run as hv_lines
 def run(img):
     extracted = extract_paper(img)
     graph = sketch_graph(extracted)
-    graph = hv_lines(graph, background=extracted)
+    graph = hv_lines(graph, extracted)
     
     svg = printer.graph_to_svg(graph)
     printer.write_file("log/out.svg", svg)

@@ -5,6 +5,7 @@ import os
 import glob
 import math
 import infrastructure.helper as helper
+from infrastructure.helper import Colors as Colors
 import time
 import datetime
 
@@ -23,32 +24,10 @@ def to_int(x):
         return int(x)
 
 
-def image(background=None, width=800, height=600, # TODO width and height correct?
-          contours=[], points=[], lines=[], pixels=[], circles=[], graph=None):
+def bgrOrGreyImage(bgrOrGrey):
     global _out_count, _log_base_dir, _log_dir_instance
     if _out_method == "silent":
         return
-    if background is None:
-        img = np.zeros((height,width,3), np.uint8)
-    elif len(background.shape) == 2:
-        img = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
-    else:
-        img = background.copy()
-    
-    cv2.drawContours(img, contours, -1, (0,100,255), 2)
-    for (p1, p2) in lines:
-        color = helper.Colors.get_color_from_edge_in_bgr(graph, (p1, p2))
-        cv2.line(img, to_int(p1), to_int(p2), to_int(color), 2)
-    for point in pixels:
-        (x, y) = point
-        (r, g, b) = helper.Colors.get_color_from_node_in_rgb(graph, point, (0,0,255))
-        img[to_int(y), to_int(x)] = np.uint8([b, g, r])
-    for point in points:
-        color = helper.Colors.get_color_from_node_in_rgb(graph, point, (0,0,255))
-        cv2.circle(img, to_int(point), 1, to_int(color), -1)
-    for (center, radius) in circles:
-        cv2.circle(img, to_int(center), to_int(radius), (0,255,0), 2)
-    
     if _out_method == "file":
         if _log_dir_instance is None:
             ts = time.time()
@@ -57,11 +36,39 @@ def image(background=None, width=800, height=600, # TODO width and height correc
             if not os.path.exists(_log_dir_instance):
                 os.makedirs(_log_dir_instance)
         file_name = generate_file_name("png")
-        cv2.imwrite(file_name, img)
+        # expects BGR color space, or Grey
+        cv2.imwrite(file_name, bgrOrGrey)
     if _out_method == "stream":
-        draw_window(img)
+        draw_window(bgrOrGrey)
     
     _out_count += 1
+
+
+def hsvOrGreyImage(img, contours=[], points=[], lines=[], pixels=[], circles=[], graph=None):
+    global _out_count, _log_base_dir, _log_dir_instance
+    if _out_method == "silent":
+        return
+    img = img.copy()
+    if len(img.shape) == 2:  # is grey
+        img = helper.grey2hsv(img)
+        
+    cv2.drawContours(img, contours, -1, Colors.get_hsv(Colors.Red), 2)
+    for (p1, p2) in lines:
+        color = Colors.get_color_from_edge_in_hsv(graph, (p1, p2))
+        cv2.line(img, to_int(p1), to_int(p2), to_int(color), 2)
+    for point in pixels:
+        (x, y) = point
+        color = Colors.get_color_from_node_in_hsv(graph, point)
+        img[to_int(y), to_int(x)] = to_int(color)
+    for point in points:
+        color = Colors.get_color_from_node_in_hsv(graph, point)
+        cv2.circle(img, to_int(point), 3, to_int(color), -1)  # -1 = fill
+    for (center, radius) in circles:
+        cv2.circle(img, to_int(center), to_int(radius), to_int((0,255,255)), 2)
+    
+    img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+    bgrOrGreyImage(img)
+
 
 def draw_window(img):
     global _out_count
@@ -72,6 +79,7 @@ def draw_window(img):
         _windows.append("is_new_window")
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
+    # expects BGR color space, or Grey
     cv2.imshow(window_name, img)
 
 
