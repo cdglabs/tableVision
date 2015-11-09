@@ -217,8 +217,8 @@ def find_corners(path, neighborhood=22, angle_tolerance=math.pi/5):
 
     for (index, score) in enumerate(corner_scores):
         if score > angle_tolerance:
-            # To count as a corner, the corner score needs to be the highest
-            # extremeness score in its neighborhood.
+            # To count as a corner, the point's extremeness score needs to be
+            # the highest in its neighborhood.
             before_points = get_neighborhood(path, index, -1, neighborhood)
             after_points = get_neighborhood(path, index, 1, neighborhood)
             start_index = index - len(before_points) + 1
