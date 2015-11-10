@@ -16,8 +16,8 @@ def run(img):
     graph = sketch_graph(img)
 
     graph = topology.simplify_junctures(graph)
-    log.image(
-        background=img,
+    log.hsvOrGreyImage(
+        img,
         pixels=graph.nodes(),
         points=(node for node in graph.nodes() if graph.degree(node) != 2)
     )
@@ -28,8 +28,8 @@ def run(img):
     for path in paths:
         corners.extend(corner_detection.find_corners(path))
 
-    log.image(
-        background=img,
+    log.hsvOrGreyImage(
+        img,
         points=corners
     )
 
