@@ -8,6 +8,7 @@ Python libraries to install:
 
 * cv2
 * numpy
+* scipy
 * scikit-image
 * networkx
 * cairosvg
