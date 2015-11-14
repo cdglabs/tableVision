@@ -1,9 +1,11 @@
 <link rel="stylesheet" type="text/css" href="/vendor/codemirror.css">
+<link rel="stylesheet" type="text/css" href="/vendor/material.css">
 
 <style type="text/css">
 
 html, body {
   margin: 0;
+  background-color: #263238;
 }
 
 #content {
@@ -50,6 +52,7 @@ function render(sourceFiles, logData) {
 
   mirror = CodeMirror(contentEl, {
     mode: "python",
+    theme: "material",
     value: "\n"
   });
 
