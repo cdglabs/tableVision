@@ -11,75 +11,21 @@ lines than we can in ordinary straight lines. Thus this module has several
 algorithms for finding corners.
 """
 
-import itertools
 import math
-from core.topology import rdp, pairwise, is_horizontal, distance, quadrance
+import core.util.vec as vec
+import core.util.stepping as stepping
 import core.topology as topology
 
-
-def triplewise(iterable):
-    """s -> (s0,s1,s2), (s1,s2,s3), (s2,s3,s4), ..."""
-    a, b, c = itertools.tee(iterable, 3)
-    next(b, None)
-    next(c, None)
-    next(c, None)
-    return itertools.izip(a, b, c)
-
-def angle(a, b, c):
-    """Returns the angle (in radians) created between 3 points. The angle at B
-    going from point A to point C. Result is always between 0 and pi.
-    """
-    ab = distance(a, b)
-    bc = distance(b, c)
-    ac = distance(a, c)
-    d = (ab**2 + bc**2 - ac**2) / (2 * ab * bc)
-    d = min(1, max(d, -1))
-    return math.acos(d)
 
 
 def find_corners_hv(path, epsilon=3):
     corners = []
-    simplified_path = rdp(path, epsilon)
-    for (a, b, c) in triplewise(simplified_path):
-        if is_horizontal(a, b) != is_horizontal(b, c):
+    simplified_path = fit.rdp(path, epsilon)
+    for (a, b, c) in stepping.triplewise(simplified_path):
+        if vec.is_horizontal(a, b) != vec.is_horizontal(b, c):
             corners.append(b)
     return corners
 
-# def find_corners_straight(path, epsilon=3, angle_tolerance=):
-#     corners = []
-#     simplified_path = rdp(path, epsilon)
-#     for (a, b, c) in triplewise(simplified_path):
-
-#         if is_horizontal(a, b) != is_horizontal(b, c):
-#             corners.append(b)
-#     return corners
-
-
-
-
-
-def add((ax,ay), (bx,by)):
-    return ((ax+bx), (ay+by))
-
-def sub((ax,ay), (bx,by)):
-    return ((ax-bx), (ay-by))
-
-def dot((ax,ay), (bx,by)):
-    return ax*bx + ay*by
-
-def normalize((x,y)):
-    length = math.sqrt(x**2 + y**2)
-    return (x/length, y/length)
-
-def is_colinear(points):
-    epsilon = .000001
-    direction = normalize(sub(points[1], points[0]))
-    for a, b in pairwise(points):
-        d = normalize(sub(b, a))
-        (x,y) = sub(direction, d)
-        if abs(x) > epsilon or abs(y) > epsilon:
-            return False
-    return True
 
 def get_neighborhood(path, index, direction, neighborhood):
     """Finds the neighborhood of points around path[index].
@@ -98,13 +44,14 @@ def get_neighborhood(path, index, direction, neighborhood):
     while 0 <= index < len(path):
         point = path[index]
         prev_point = path[index - direction]
-        step_distance = distance(prev_point, point)
+        step_distance = vec.distance(prev_point, point)
         path_length += step_distance
         if path_length > neighborhood:
             break
         result.append(point)
         index += direction
     return result
+
 
 def get_tangent_direction(path, index, direction, neighborhood):
     """The tangent as normalized vector at the point at path[index].
@@ -122,27 +69,26 @@ def get_tangent_direction(path, index, direction, neighborhood):
     if is_colinear(points):
         # If they're colinear, then getting the tangent is easy. We just pick
         # two points in the path to get the direction.
-        return normalize(sub(origin, points[1]))
+        return vec.normalize(vec.sub(origin, points[1]))
 
     (center, radius) = topology.fit_circle_to_points(points)
-    perpendicular = normalize(sub(center, origin))
+    perpendicular = vec.normalize(vec.sub(center, origin))
     (px, py) = perpendicular
     # There are two options for tangent direction: a or b.
     a = (-py, px)
     b = (py, -px)
-    pa = add(origin, a)
-    pb = add(origin, b)
+    pa = vec.add(origin, a)
+    pb = vec.add(origin, b)
     # We choose the one that is furthest from points.
     a_total = 0
     b_total = 0
     for point in points:
-        a_total += quadrance(pa, point)
-        b_total += quadrance(pb, point)
+        a_total += vec.quadrance(pa, point)
+        b_total += vec.quadrance(pb, point)
     if a_total > b_total:
         return a
     else:
         return b
-
 
 
 def corner_score(path, index, neighborhood):
@@ -188,9 +134,9 @@ def extremeness_score(path, index, neighborhood):
 
     total = (0,0)
     for point in before_points + after_points:
-        d = sub(point, origin)
+        d = vec.sub(point, origin)
         if not (d[0] == 0 and d[1] == 0):
-            total = add(total, normalize(d))
+            total = vec.add(total, vec.normalize(d))
 
     (x,y) = total
     return x**2 + y**2

@@ -18,20 +18,11 @@ A path is a list of nodes, each one connects to the next.
 
 
 import networkx as nx
-import itertools
 import math
 import numpy as np
+
+# TODO: This should be moved to util or Settings, etc.
 import infrastructure.helper as helper
-
-
-def pairwise(iterable):
-    """s -> (s0,s1), (s1,s2), (s2, s3), ...
-
-    via https://docs.trans-module imports.org/2/library/itertools.html
-    """
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return itertools.izip(a, b)
 
 
 def neighbor_coords((x,y), (width,height)):
@@ -46,55 +37,6 @@ def neighbor_coords((x,y), (width,height)):
             if 0 < neighbor_x < width and 0 < neighbor_y < height:
                 neighbors.append((neighbor_x, neighbor_y))
     return neighbors
-
-
-def quadrance((x1,y1), (x2,y2)):
-    """Returns distance-squared between two points."""
-    dx = x2 - x1
-    dy = y2 - y1
-    return dx*dx + dy*dy
-
-
-def distance(p1, p2):
-    return math.sqrt(quadrance(p1, p2))
-
-
-def point_line_distance(point, start, end):
-    if (start == end):
-        return distance(point, start)
-    else:
-        n = abs(
-            (end[0] - start[0]) * (start[1] - point[1]) -
-            (start[0] - point[0]) * (end[1] - start[1])
-        )
-        d = math.sqrt(
-            (end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2
-        )
-        return n / d
-
-
-def rdp(points, epsilon):
-    """Reduces a series of points to a simplified version that loses detail, but
-    maintains the general shape of the series.
-
-    The Ramer-Douglas-Peucker algorithm roughly ported from the pseudo-code
-    provided by http://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm
-
-    via https://github.com/sebleier/RDP/
-    """
-    dmax = 0.0
-    index = 0
-    for i in range(1, len(points) - 1):
-        d = point_line_distance(points[i], points[0], points[-1])
-        if d > dmax:
-            index = i
-            dmax = d
-    if dmax >= epsilon:
-        results = rdp(points[:index+1], epsilon)[:-1] + \
-            rdp(points[index:], epsilon)
-    else:
-        results = [points[0], points[-1]]
-    return results
 
 
 def produce_graph(skeleton_img, hsv_image = None):
@@ -114,7 +56,7 @@ def produce_graph(skeleton_img, hsv_image = None):
                     color = helper.Colors.get_color_compartment(hsv_pixel)
                     attribute_dict = {'color': color}
                 graph.add_node(point, attribute_dict)
-                
+
                 for neighbor in neighbor_coords(point, (cols, rows)):
                     neighbor_pixel = skeleton_img.item(neighbor[1], neighbor[0])
                     if neighbor_pixel == 255:
@@ -162,7 +104,7 @@ def get_path_color(graph, path):
                 color_occurrence[color] = 1
             else:
                 color_occurrence[color] += 1
-    
+
     if len(color_occurrence) == 0:
         return helper.Colors.Black
     return max(color_occurrence)
@@ -172,7 +114,7 @@ def find_same_length_constraints(graph):
     # find_paths from t-junctions!
     termination_junctures = find_termination_junctures(graph)
     paths_from_t_junctures = find_paths_from_junctures(graph, termination_junctures)
-    
+
     constraint_junctions = []
     for (p1, p2) in itertools.combinations(paths_from_t_junctures, 2):
         last_node_p1 = p1[len(p1)-1]
@@ -184,7 +126,7 @@ def find_same_length_constraints(graph):
             print "found same length constraint!"
             constraint_junctions.append(last_node_p1)
             graph.node[last_node_p1]["constraint"] = "same_length"
-    
+
     mygraph = nx.Graph()
     for path in paths_from_t_junctures:
         path_color = get_path_color(graph, path)
@@ -193,7 +135,7 @@ def find_same_length_constraints(graph):
         mygraph.add_node(start, {'color': path_color})
         mygraph.add_node(end, {'color': path_color})
         mygraph.add_edge(start, end, {'color': path_color})
-        
+
         if path_color != helper.Colors.Black:
             for i in range(len(path)):
                 # do not delete path end juncture if it implements a constraint
@@ -202,9 +144,9 @@ def find_same_length_constraints(graph):
                     graph.remove_node(node)
                 else:
                     print "left constraint juncture in place"
-    
+
     return mygraph, constraint_junctions
-    
+
 
 
 def simplify_junctures(graph, epsilon=5):
@@ -304,7 +246,7 @@ def simplify_paths(graph, epsilon=3):
             if "constraint" in graph.node[node] and graph.node[node]["constraint"] == "same_length":
                 edge_attributes["same_length_strokes"] += 1
                 print "added strokes", edge_attributes["same_length_strokes"]
-            
+
             if index == 0 or index == len(path)-1:
                 continue
             graph.remove_node(node)
@@ -344,7 +286,7 @@ def remove_bridge(graph, node):
     # preserve constraints from old edges to new edge
     edge1attributes = graph.get_edge_data(p1, node)
     edge2attributes = graph.get_edge_data(p2, node)
-    
+
     graph.remove_node(node)
     graph.add_edge(p1, p2, merge_attributes(edge1attributes, edge2attributes))
 
@@ -390,97 +332,6 @@ def straighten_lines(graph, max_angle):
         remove_bridge(graph, node)
     return graph
 
-
-def fit_plane_to_points(points):
-    """Takes a list of 3D data points [(x,y,z)] and fits a plane. Returns
-    (center, normal) as numpy arrays.
-
-    via https://gist.github.com/lambdalisue/7201028
-    """
-    points = np.array(points)
-    center = np.average(points, axis=0)
-    # Normalize points as vector from center.
-    points = points - center
-    # Singular value decomposition
-    U, S, V = np.linalg.svd(points)
-    # The last row of V matrix indicate the eigenvectors of smallest
-    # eigenvalues (singular values).
-    normal = V[-1]
-    return (center, normal)
-
-
-def intersect_plane_with_paraboloid(center, normal):
-    """Intersects a plane given as (center, normal) with the paraboloid z =
-    x**2 + y**2. Then projects this ellipse onto the x-y plane giving a
-    circle. This circle is returned as (center, radius).
-
-    We know the equation of the plane:
-
-        a*x + b*y + c*z = d
-
-    We know for any point on the plane p,
-
-        normal dot (p - center) = 0
-
-    Our equation for the paraboloid is:
-
-        x**2 + y**2 = z
-
-    Substituting for z using our equation for the plane,
-
-        x**2 + y**2 = (d - a*x - b*y) / c
-
-    Rearranging x and y to the lhs,
-
-        x**2 + (a/c)*x + y**2 + (b/c)*y = d/c
-
-    Recall that a circle of radius r centered at (x0, y0) has equation:
-
-        (x - x0)**2 + (y - y0)**2 = r**2
-
-        x**2 - 2*x0*x + x0**2 + y**2 - 2*y0*y + y0**2 = r**2
-
-        x**2 - 2*x0*x + y**2 - 2*y0*y = r**2 - x0**2 - y0**2
-
-    So we know that:
-
-        a/c = -2*x0
-
-        b/c = -2*y0
-
-        d/c = r**2 - x0**2 - y0**2
-
-    """
-    (a, b, c) = normal
-    d = np.dot(normal, center)
-
-    x0 = -(a / c) / 2
-    y0 = -(b / c) / 2
-    r = np.sqrt( (d / c) + x0**2 + y0**2)
-
-    return ((x0,y0), r)
-
-
-def fit_circle_to_points(points):
-    """Takes a list of 2D data points [(x,y)] and fits a circle. Returns
-    (center, radius).
-    """
-
-    points = np.array(points)
-    p0 = points[0]
-    # Normalize points as vector from p0.
-    points = points - p0
-    # Now we project onto the parabola z = x**2 + y**2.
-    z = np.sum(points**2, axis=1)
-    points = np.c_[points, z]
-    (plane_center, plane_normal) = fit_plane_to_points(points)
-
-    (center, radius) = intersect_plane_with_paraboloid(plane_center, plane_normal)
-
-    # Unnormalize from p0.
-    center = center + p0
-
-    return (center, radius)
 
 
 
