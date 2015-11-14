@@ -1,0 +1,133 @@
+<link rel="stylesheet" type="text/css" href="/vendor/codemirror.css">
+
+<style type="text/css">
+
+html, body {
+  margin: 0;
+}
+
+#content {
+  padding-left: 40px;
+}
+
+.CodeMirror {
+  height: auto;
+}
+
+h1 {
+  border-top: 1px dashed #aaa;
+  padding-top: 1rem;
+  padding-left: 4px;
+}
+
+img {
+  width: 300px;
+  margin: 4px 0px;
+}
+
+</style>
+
+<script src="/vendor/codemirror.js"></script>
+<script src="/vendor/python.js"></script>
+
+
+<div id="content"></div>
+
+
+<script>
+
+function reload() {
+  loadJson("/sourcefiles", function (sourceFiles) {
+    loadJson("/log/data.json", function (logData) {
+      render(sourceFiles, logData);
+    });
+  });
+}
+
+function render(sourceFiles, logData) {
+  contentEl = document.querySelector("#content");
+  contentEl.innerHTML = "";
+
+  mirror = CodeMirror(contentEl, {
+    mode: "python",
+    value: "\n"
+  });
+
+  var titles = [];
+  var logEntries = [];
+  var allCode = "";
+
+  sourceFiles.forEach(function (sourceFile) {
+    startLine = allCode.split("\n").length - 1;
+
+    titles.push({
+      name: sourceFile.name,
+      line: startLine
+    });
+
+    logData.forEach(function (datum) {
+      if (datum.file == sourceFile.name) {
+        logEntries.push({
+          line: startLine + datum.line,
+          image: datum.image
+        });
+      }
+    });
+
+    allCode += "\n" + sourceFile.content;
+  });
+
+  mirror.setValue(allCode);
+
+  titles.forEach(function (title) {
+    titleEl = document.createElement("h1");
+    titleEl.innerText = title.name;
+    mirror.addLineWidget(title.line, titleEl);
+  });
+
+  logEntries.forEach(function (entry) {
+    imgEl = document.createElement("img");
+    imgEl.src = "/log/" + entry.image;
+    var lineText = mirror.getLine(entry.line);
+    var indent = lineText.replace(/[^ ].*/, "").length;
+    imgEl.style.marginLeft = indent * 9 + "px"
+    mirror.addLineWidget(entry.line, imgEl);
+  });
+
+  // test1 = document.createElement("h1")
+  // test1.innerHTML = "Test 1"
+
+  // test2 = document.createElement("h2")
+  // test2.innerHTML = "Test 2"
+
+  // mirror.addLineWidget(0, test1)
+  // mirror.addLineWidget(10, test2)
+
+  // sourceFiles.forEach(function (sourceFile) {
+  //   var mirror = CodeMirror(contentEl, {
+  //     value: sourceFile.content,
+  //     mode:  "python",
+  //     lineNumbers: true,
+  //     viewportMargin: Infinity,
+  //     scrollbarStyle: "null"
+  //   });
+  //   console.log(sourceFile);
+  // });
+
+}
+
+function loadJson(url, callback) {
+  var XmlHttpRequest = new XMLHttpRequest();
+  XmlHttpRequest.overrideMimeType("application/json");
+  XmlHttpRequest.open("GET", url, true);
+  XmlHttpRequest.onreadystatechange = function () {
+    if (XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == "200") {
+      callback(JSON.parse(XmlHttpRequest.responseText));
+    }
+  };
+  XmlHttpRequest.send(null);
+}
+
+reload()
+
+</script>
