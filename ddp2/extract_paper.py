@@ -38,6 +38,8 @@ def white_balance(inimg, randomPoolSize = 100, selectionPoolSize = 20):
     img[:, :, 0] -= dg
     img[:, :, 1] -= db
     img[:, :, 2] -= dr
+
+    log.image(img)
     return img
 
 
@@ -45,7 +47,6 @@ def main():
     img = cv2.imread("../input/curves.jpg")
     log.image(img)
     img = white_balance(img)
-    log.image(img)
 
 if __name__ == "__main__":
     main()
