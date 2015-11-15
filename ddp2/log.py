@@ -10,12 +10,13 @@ Usage examples:
         log.points(points)
     )
 
-By calling log functions, a timestamped directory will be created in ../log.
-Images will be written here and additionally a data.json file will be written.
-This JSON file contains a list of {file, line, image} entries.
+The first time a log function is called, the log directory will be cleared.
+
+Every call to log will write a new image file and also write an entry to
+data.json. This JSON file contains a list of {file, line, image} entries.
 """
 
-import os, time, datetime, traceback, json
+import os, glob, traceback, json
 import cv2
 
 def image(img, needs_copy=True, *overlays):
@@ -69,23 +70,21 @@ def pixels(ps, color=(255,0,0)):
 # Logging Internals
 # =============================================================================
 
-LOG_BASE_DIR = "../log/"
-log_dir = None
+log_dir = "../log/"
 log_entries = []
 
-def ensure_log_initialized():
-    global log_dir
-    if log_dir is None:
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H.%M.%S')
-        log_dir = LOG_BASE_DIR + st + "/"
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
+def initialize_log_directory():
+    # Clear files in log directory.
+    files = glob.glob(log_dir + "*")
+    for f in files:
+        if not os.path.isdir(f):
+            os.remove(f)
+
+    # Reset log entries.
+    del log_entries[:]
+    update_log_data()
 
 def write_log_entry(img):
-    # Ensure log directory is initialized.
-    ensure_log_initialized()
-
     # Generate image file name.
     out_count = len(log_entries)
     image_file_name = str(out_count).rjust(3, "0") + ".png"
@@ -137,3 +136,6 @@ def update_log_data():
 
     with open(log_dir + "data.json", "w") as json_file:
         json_file.write(json_string)
+
+# Initialize log directory when this module starts up.
+initialize_log_directory()
