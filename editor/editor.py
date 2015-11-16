@@ -50,6 +50,16 @@ def sourcefiles():
 def log_file(file_name):
     return send_from_directory(LOG_DIR, file_name)
 
+@app.route("/run/<path:file_name>")
+def run_file(file_name):
+    "TODO"
+
+@app.route("/save/<path:file_name>")
+def save_file(file_name):
+    "TODO"
+    # Needs to access request data, maybe should be a POST method
+    # http://flask.pocoo.org/docs/0.10/quickstart/#accessing-request-data
+
 
 # Helpers
 
@@ -61,4 +71,4 @@ def read_file(file_path):
 # Start it
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
