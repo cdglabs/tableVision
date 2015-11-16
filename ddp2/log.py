@@ -88,10 +88,10 @@ def write_log_entry(img):
     # Generate image file name.
     out_count = len(log_entries)
     image_file_name = str(out_count).rjust(3, "0") + ".png"
-    image_path_name = log_dir + image_file_name
+    image_path = log_dir + image_file_name
 
     # Write image file.
-    cv2.imwrite(image_path_name, img)
+    cv2.imwrite(image_path, img)
 
     # Figure out who called log.
     (caller_file, caller_line) = get_caller()
