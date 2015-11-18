@@ -80,7 +80,12 @@ R.create "File",
         "Selected": isSelected
       }
       onClick: @onClick
-    }, name
+    },
+      R.div {className: "FileName"}, name
+      R.div {className: "FileImages"},
+        for entry in model.logData
+          if entry.file == name
+            R.img {src: "/log/" + entry.image}
 
   onClick: ->
     {name, content} = @props.sourceFile
