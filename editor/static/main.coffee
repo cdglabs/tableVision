@@ -110,6 +110,7 @@ R.create "SourceCode",
 
       matchBrackets: true
       autoCloseBrackets: true
+      styleActiveLine: true
 
       # lineNumbers: true
       extraKeys: {
