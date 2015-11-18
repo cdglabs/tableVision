@@ -10,15 +10,51 @@
 
 html, body {
   margin: 0;
+  overflow: hidden;
   background-color: #263238;
+  color: rgba(255,255,255,0.9);
+  font-family: menlo;
+  font-weight: 300;
 }
 
-#content {
-  padding-left: 40px;
+.Files {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  width: 240px;
+  background-color: rgba(255,255,255,0.1);
 }
+
+.File {
+  padding: 10px 20px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+}
+.File:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+.File.Selected {
+  color: rgba(255,255,255,0.9);
+}
+
+.SourceCode {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 240px;
+  right: 0px;
+  padding-left: 10px;
+}
+
+
+
+
 
 .CodeMirror {
-  height: auto;
+  height: 100%;
 }
 
 h1 {

@@ -21,7 +21,7 @@
   color: rgb(83,127,126);
   border: none;
 }
-.cm-s-material .CodeMirror-guttermarker, .cm-s-material .CodeMirror-guttermarker-subtle, .cm-s-material .CodeMirror-linenumber { color: rgb(83,127,126); }
+.cm-s-material .CodeMirror-guttermarker, .cm-s-material .CodeMirror-guttermarker-subtle, .cm-s-material .CodeMirror-linenumber { color: #49565D; }
 .cm-s-material .CodeMirror-cursor { border-left: 1px solid #f8f8f0; }
 .cm-s-material div.CodeMirror-selected { background: rgba(255, 255, 255, 0.15); }
 .cm-s-material.CodeMirror-focused div.CodeMirror-selected { background: rgba(255, 255, 255, 0.10); }
@@ -44,7 +44,7 @@
 }
 .cm-s-material .cm-string { color: #C3E88D; }
 .cm-s-material .cm-string-2 { color: #80CBC4; }
-.cm-s-material .cm-comment { color: #546E7A; }
+.cm-s-material .cm-comment { color: rgb(83,127,126); }
 /*.cm-s-material .cm-variable { color: #82B1FF; }*/
 .cm-s-material .cm-variable { color: rgba(233, 237, 237, 1); }
 .cm-s-material .cm-tag { color: #80CBC4; }

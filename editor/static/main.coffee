@@ -1,5 +1,33 @@
 
+# =============================================================================
+# Model
+# =============================================================================
 
+model = new class
+  constructor: ->
+    @sourceFiles = [] # {name, content}
+    @logData = [] # {line, image, file}
+    @selectedFileName = false
+
+  selectedFile: ->
+    return @sourceFiles.find (sourceFile) =>
+      sourceFile.name == @selectedFileName
+
+  selectFile: (fileName) ->
+    @selectedFileName = fileName
+
+reload = ->
+  loadJson "/sourcefiles", (sourceFiles) ->
+    loadJson "/log/data.json", (logData) ->
+      model.sourceFiles = sourceFiles
+      model.logData = logData
+      if !model.selectedFileName
+        model.selectedFileName = sourceFiles[0].name
+      render()
+
+render = ->
+  contentEl = document.querySelector("#content")
+  R.render(R.App(), contentEl)
 
 
 # =============================================================================
@@ -30,9 +58,40 @@ R.findDOMNode = ReactDOM.findDOMNode
 # Views
 # =============================================================================
 
+R.create "App",
+  render: ->
+    R.div {},
+      R.Files {}
+      R.SourceCode {}
+
+R.create "Files",
+  render: ->
+    R.div {className: "Files"},
+      for sourceFile in model.sourceFiles
+        R.File {sourceFile, key: sourceFile.name}
+
+R.create "File",
+  render: ->
+    {name, content} = @props.sourceFile
+    isSelected = (name == model.selectedFileName)
+    R.div {
+      className: R.cx {
+        "File": true
+        "Selected": isSelected
+      }
+      onClick: @onClick
+    }, name
+
+  onClick: ->
+    {name, content} = @props.sourceFile
+    model.selectFile(name)
+    render()
+
+
+
 R.create "SourceCode",
   render: ->
-    R.div {}
+    R.div {className: "SourceCode"}
 
   componentDidMount: ->
     el = R.findDOMNode(this)
@@ -44,13 +103,13 @@ R.create "SourceCode",
       smartIndent: true
       indentUnit: 4
 
-      lineNumbers: true
+      # lineNumbers: true
     })
 
     @componentDidUpdate()
 
   componentDidUpdate: ->
-    {sourceFile} = @props
+    sourceFile = model.selectedFile()
 
     @mirror.setValue(sourceFile.content)
 
@@ -89,69 +148,9 @@ R.create "SourceCode",
   #     @transcludeAttribute(dragManager.drag.attribute)
 
 
-
-
-model = {
-  sourceFiles: []
-  logData: []
-}
-
-reload = ->
-  loadJson "/sourcefiles", (sourceFiles) ->
-    loadJson "/log/data.json", (logData) ->
-      model.sourceFiles = sourceFiles
-      model.logData = logData
-
-      contentEl = document.querySelector("#content")
-      R.render(R.SourceCode({sourceFile: sourceFiles[0]}), contentEl)
-
-
-render = (sourceFiles, logData) ->
-  contentEl = document.querySelector("#content")
-  contentEl.innerHTML = ""
-
-  mirror = CodeMirror(contentEl, {
-    mode: "python"
-    theme: "material"
-    value: "\n"
-  })
-
-  titles = []
-  logEntries = []
-  allCode = ""
-
-  for sourceFile in sourceFiles
-    startLine = allCode.split("\n").length - 1
-
-    titles.push({
-      name: sourceFile.name
-      line: startLine
-    })
-
-    for datum in logData
-      if datum.file == sourceFile.name
-        logEntries.push({
-          line: startLine + datum.line,
-          image: datum.image
-        })
-
-    allCode += "\n" + sourceFile.content
-
-  mirror.setValue(allCode)
-
-  for title in titles
-    titleEl = document.createElement("h1")
-    titleEl.innerText = title.name
-    mirror.addLineWidget(title.line, titleEl)
-
-  for entry in logEntries
-    imgEl = document.createElement("img")
-    imgEl.src = "/log/" + entry.image
-    lineText = mirror.getLine(entry.line)
-    indent = lineText.replace(/[^ ].*/, "").length
-    imgEl.style.marginLeft = indent * 9 + "px"
-    mirror.addLineWidget(entry.line, imgEl)
-
+# =============================================================================
+# Utility
+# =============================================================================
 
 loadJson = (url, callback) ->
   xhr = new XMLHttpRequest()
@@ -163,5 +162,9 @@ loadJson = (url, callback) ->
   xhr.open("GET", url, true)
   xhr.send()
 
+
+# =============================================================================
+# Bootstrap
+# =============================================================================
 
 reload()
