@@ -55,6 +55,8 @@
 .cm-s-material .cm-variable-3 { color: #DECB6B; }
 .cm-s-material .cm-tag { color: rgba(255, 83, 112, 1); }
 .cm-s-material .CodeMirror-matchingbracket {
-  text-decoration: underline;
-  color: white !important;
+  /*text-decoration: underline;*/
+  /*color: white !important;*/
+  color: rgba(233, 237, 237, 0.65) !important;
+  border-bottom: 1px solid white;
 }

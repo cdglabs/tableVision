@@ -85,7 +85,7 @@ R.create "File",
       R.div {className: "FileImages"},
         for entry in model.logData
           if entry.file == name
-            R.img {src: "/log/" + entry.image}
+            R.img {src: "/log/" + entry.image, key: entry.image}
 
   onClick: ->
     {name, content} = @props.sourceFile
@@ -108,7 +108,16 @@ R.create "SourceCode",
       smartIndent: true
       indentUnit: 4
 
+      matchBrackets: true
+      autoCloseBrackets: true
+
       # lineNumbers: true
+      extraKeys: {
+        # Indent with spaces, not tabs.
+        Tab: (cm) ->
+          spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
+          cm.replaceSelection(spaces)
+      }
     })
 
     @componentDidUpdate()
