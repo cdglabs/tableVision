@@ -101,10 +101,15 @@ R.create "App",
       R.div {className: "Files"},
         for sourceFile in model.sourceFiles
           R.File {sourceFile, key: sourceFile.fileName}
+        R.button {onClick: @addFile}, "Add"
       R.div {className: "SourceCodes"},
         for sourceFile in model.sourceFiles
           R.SourceCode {sourceFile, key: sourceFile.fileName}
-
+  addFile: ->
+    fileName = prompt("File Name")
+    model.sourceFiles.push {fileName, content: ""}
+    model.selectFile(fileName)
+    render()
 
 R.create "File",
   render: ->
