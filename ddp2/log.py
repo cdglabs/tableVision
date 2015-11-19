@@ -98,8 +98,8 @@ def write_log_entry(img):
 
     # Add entry to log_entries.
     entry = {
-        "file": caller_file,
-        "line": caller_line,
+        "fileName": caller_file,
+        "lineNumber": caller_line,
         "image": image_file_name
     }
     log_entries.append(entry)

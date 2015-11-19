@@ -3,31 +3,68 @@
 # Model
 # =============================================================================
 
-model = new class
+model = window.model = new class
   constructor: ->
-    @sourceFiles = [] # {name, content}
-    @logData = [] # {line, image, file}
+    @sourceFiles = [] # {fileName, content}
+    @logEntries = [] # {fileName, lineNumber, image}
     @selectedFileName = false
 
   selectedFile: ->
     return @sourceFiles.find (sourceFile) =>
-      sourceFile.name == @selectedFileName
+      sourceFile.fileName == @selectedFileName
 
   selectFile: (fileName) ->
     @selectedFileName = fileName
 
-reload = ->
-  loadJson "/sourcefiles", (sourceFiles) ->
-    loadJson "/log/data.json", (logData) ->
-      model.sourceFiles = sourceFiles
-      model.logData = logData
-      if !model.selectedFileName
-        model.selectedFileName = sourceFiles[0].name
+  reload: ->
+    @reloadSourceFiles()
+    @reloadLogEntries()
+
+  reloadSourceFiles: ->
+    @fetchJson "/sourceFiles.json", (data) =>
+      @sourceFiles = data
+      if !@selectedFileName
+        @selectedFileName = @sourceFiles[0].fileName
       render()
+
+  reloadLogEntries: ->
+    @fetchJson "/logEntries.json", (data) =>
+      @logEntries = data
+      render()
+      refreshAnnotations()
+
+  fetchJson: (url, callback) ->
+    fetch(url)
+      .then (response) -> response.json()
+      .then (data) -> callback(data)
+
+  save: ->
+    data = {
+      sourceFiles: @sourceFiles
+      currentFileName: @selectedFileName
+    }
+    fetch("/save", {
+      method: "post"
+      headers: {
+        "Accept": "application/json"
+        "Content-Type": "application/json"
+      }
+      body: JSON.stringify(data)
+    }).then (response) =>
+      @reloadLogEntries()
+
+
+# =============================================================================
+# (Re)rendering the View
+# =============================================================================
 
 render = ->
   contentEl = document.querySelector("#content")
   R.render(R.App(), contentEl)
+
+refreshAnnotations = ->
+  for el in document.querySelectorAll(".SourceCode")
+    el.refreshAnnotations()
 
 
 # =============================================================================
@@ -61,19 +98,18 @@ R.findDOMNode = ReactDOM.findDOMNode
 R.create "App",
   render: ->
     R.div {},
-      R.Files {}
-      R.SourceCode {}
+      R.div {className: "Files"},
+        for sourceFile in model.sourceFiles
+          R.File {sourceFile, key: sourceFile.fileName}
+      R.div {className: "SourceCodes"},
+        for sourceFile in model.sourceFiles
+          R.SourceCode {sourceFile, key: sourceFile.fileName}
 
-R.create "Files",
-  render: ->
-    R.div {className: "Files"},
-      for sourceFile in model.sourceFiles
-        R.File {sourceFile, key: sourceFile.name}
 
 R.create "File",
   render: ->
-    {name, content} = @props.sourceFile
-    isSelected = (name == model.selectedFileName)
+    {fileName, content} = @props.sourceFile
+    isSelected = (fileName == model.selectedFileName)
     R.div {
       className: R.cx {
         "File": true
@@ -81,25 +117,33 @@ R.create "File",
       }
       onClick: @onClick
     },
-      R.div {className: "FileName"}, name
+      R.div {className: "FileName"}, fileName
       R.div {className: "FileImages"},
-        for entry in model.logData
-          if entry.file == name
-            R.img {src: "/log/" + entry.image, key: entry.image}
+        for logEntry in model.logEntries
+          if logEntry.fileName == fileName
+            R.img {src: "/log/" + logEntry.image, key: logEntry.image}
 
   onClick: ->
-    {name, content} = @props.sourceFile
-    model.selectFile(name)
+    {fileName, content} = @props.sourceFile
+    model.selectFile(fileName)
     render()
-
 
 
 R.create "SourceCode",
   render: ->
-    R.div {className: "SourceCode"}
+    {fileName, content} = @props.sourceFile
+    isSelected = (fileName == model.selectedFileName)
+    R.div {
+      className: R.cx {
+        "SourceCode": true
+        "Selected": isSelected
+      }
+    }
 
   componentDidMount: ->
     el = R.findDOMNode(this)
+
+    el.refreshAnnotations = @refreshAnnotations
 
     @mirror = CodeMirror(el, {
       mode: "python"
@@ -107,79 +151,60 @@ R.create "SourceCode",
 
       smartIndent: true
       indentUnit: 4
+      # scrollPastEnd: true # Helps with not losing your place when refresh log images...
 
       matchBrackets: true
       autoCloseBrackets: true
       styleActiveLine: true
 
-      # lineNumbers: true
+      lineNumbers: true
       extraKeys: {
         # Indent with spaces, not tabs.
         Tab: (cm) ->
           spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
           cm.replaceSelection(spaces)
+        "Cmd-S": =>
+          model.save()
       }
     })
 
-    @componentDidUpdate()
+    @initializeContent()
 
-  componentDidUpdate: ->
-    sourceFile = model.selectedFile()
+    @mirror.on("change", @onChange)
 
+  initializeContent: ->
+    sourceFile = @props.sourceFile
     @mirror.setValue(sourceFile.content)
+    @refreshAnnotations()
 
-    for entry in model.logData
-      if entry.file == sourceFile.name
+  refreshAnnotations: ->
+    sourceFile = @props.sourceFile
+
+    # Clear existing widgets
+    for lineNumber in [0 ... @mirror.lineCount()]
+      {widgets} = @mirror.lineInfo(lineNumber)
+      for widget in widgets ? []
+        widget.clear()
+    # @mirror.setValue(@mirror.getValue())
+
+    for logEntry in model.logEntries
+      {fileName, lineNumber, image} = logEntry
+      if fileName == sourceFile.fileName
         imgEl = document.createElement("img")
-        imgEl.src = "/log/" + entry.image
-        lineText = @mirror.getLine(entry.line)
+        imgEl.src = "/log/" + image
+        lineText = @mirror.getLine(lineNumber)
         indent = lineText.replace(/[^ ].*/, "").length
         imgEl.style.marginLeft = indent * 9 + "px"
-        @mirror.addLineWidget(entry.line-1, imgEl)
+        widget = @mirror.addLineWidget(lineNumber-1, imgEl)
 
+  onChange: ->
+    sourceFile = @props.sourceFile
 
-    # @mirror.on("change", @_onChange)
-    # @mirror.on("mousedown", @_onMirrorMouseDown)
-    # @componentDidUpdate()
-
-  # componentDidUpdate: ->
-  #   @_updateMirrorFromAttribute()
-
-  # _onChange: ->
-  #   @_updateAttributeFromMirror()
-  #   if @mirror.hasFocus()
-  #     @_showAutocomplete()
-
-  # _onMirrorMouseDown: (mirror, mouseDownEvent) ->
-  #   el = mouseDownEvent.target
-  #   if Util.matches(el, ".cm-number")
-  #     mouseDownEvent.preventDefault()
-  #     @_startNumberScrub(mouseDownEvent)
-
-  # _onMouseUp: (mouseUpEvent) ->
-  #   {attribute} = @props
-  #   {dragManager} = @context
-  #   if dragManager.drag?.type == "transcludeAttribute"
-  #     @transcludeAttribute(dragManager.drag.attribute)
-
-
-# =============================================================================
-# Utility
-# =============================================================================
-
-loadJson = (url, callback) ->
-  xhr = new XMLHttpRequest()
-  xhr.onreadystatechange = =>
-    return unless xhr.readyState == 4
-    return unless xhr.status == 200
-    jsonString = xhr.responseText
-    callback(JSON.parse(jsonString))
-  xhr.open("GET", url, true)
-  xhr.send()
+    sourceFile.content = @mirror.getValue()
 
 
 # =============================================================================
 # Bootstrap
 # =============================================================================
 
-reload()
+model.reload()

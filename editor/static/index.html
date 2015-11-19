@@ -50,7 +50,7 @@ html, body {
   margin-right: 2px;
 }
 
-.SourceCode {
+.SourceCodes {
   box-sizing: border-box;
   position: absolute;
   top: 0px;
@@ -58,6 +58,16 @@ html, body {
   left: 240px;
   right: 0px;
   padding-left: 10px;
+}
+
+.SourceCode {
+  position: absolute;
+  top: 0px; bottom: 0px;
+  left: 0px; right: 0px;
+  z-index: 1;
+}
+.SourceCode.Selected {
+  z-index: 2;
 }
 
 .CodeMirror {
@@ -86,6 +96,7 @@ html, body {
 <script src="/vendor/codemirror-5.8/addon/comment/comment.js"></script>
 <script src="/vendor/codemirror-5.8/addon/hint/show-hint.js"></script>
 <script src="/vendor/codemirror-5.8/addon/hint/anyword-hint.js"></script>
+<script src="/vendor/codemirror-5.8/addon/scroll/scrollpastend.js"></script>
 <script src="/vendor/coffee-script.js"></script>
 
 <script type="text/coffeescript" src="main.coffee"></script>

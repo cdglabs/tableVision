@@ -1,0 +1,15 @@
+editor
+  indicators to see
+    if there are unsaved changes
+    if a file is currently executing
+  hover images to see them bigger
+  deal with tabs and navigation around tabs better
+    see https://github.com/adobe/brackets/blob/master/src/editor/Editor.js#L329
+  live reload css
+
+log.py
+  plotting
+
+etc
+  convert pipelines, core, etc over to "ddp2"
+  rename ddp2 to ddp
