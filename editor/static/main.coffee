@@ -153,6 +153,7 @@ R.create "SourceCode",
     @mirror = CodeMirror(el, {
       mode: "python"
       theme: "material"
+      keyMap: "sublime"
 
       smartIndent: true
       indentUnit: 4
@@ -165,7 +166,7 @@ R.create "SourceCode",
       lineNumbers: true
       extraKeys: {
         # Indent with spaces, not tabs.
-        Tab: (cm) ->
+        "Tab": (cm) ->
           spaces = Array(cm.getOption("indentUnit") + 1).join(" ")
           cm.replaceSelection(spaces)
         "Cmd-S": =>

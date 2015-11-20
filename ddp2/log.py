@@ -19,15 +19,14 @@ data.json. This JSON file contains a list of {file, line, image} entries.
 import os, glob, traceback, json
 import cv2
 
-def image(img, needs_copy=True, *overlays):
+def image(img, *overlays):
     """Log a BGR image, optionally with overlays.
 
     Overlays are functions that take the image and draw on top of it (mutating
     it).
     """
     # Ensure we don't mutate img.
-    if needs_copy and len(overlays) > 0:
-        img = img.copy()
+    img = img.copy()
     # Apply overlays.
     for overlay in overlays:
         overlay(img)
@@ -35,29 +34,29 @@ def image(img, needs_copy=True, *overlays):
 
 def image_grey(img, *overlays):
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    image(img, *overlays, needs_copy=False)
+    image(img, *overlays)
 
 def image_hsv(img, *overlays):
     img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
-    image(img, *overlays, needs_copy=False)
+    image(img, *overlays)
 
 
 # =============================================================================
 # Overlays
 # =============================================================================
 
-def contours(cs, color=(255,0,0), thickness=2):
+def contours(cs, color=(0,0,255), thickness=2):
     def overlay(img):
         cv2.drawContours(img, cs, -1, color, thickness)
     return overlay
 
-def points(ps, color=(255,0,0), radius=3):
+def points(ps, color=(0,0,255), radius=3):
     def overlay(img):
         for (x,y) in ps:
             cv2.circle(img, (int(x),int(y)), radius, color, -1)
     return overlay
 
-def pixels(ps, color=(255,0,0)):
+def pixels(ps, color=(0,0,255)):
     def overlay(img):
         for (x,y) in ps:
             img[int(y),int(x)] = color

@@ -75,7 +75,8 @@ html, body {
 }
 
 .SourceCode img {
-  width: 300px;
+  max-width: 300px;
+  max-height: 300px;
   margin: 4px 0px;
 }
 
@@ -90,6 +91,9 @@ html, body {
 <script src="/vendor/react-dom.js"></script>
 <script src="/vendor/codemirror-5.8/lib/codemirror.js"></script>
 <script src="/vendor/codemirror-5.8/mode/python/python.js"></script>
+<script src="/vendor/codemirror-5.8/keymap/sublime.js"></script>
+<script src="/vendor/codemirror-5.8/addon/search/searchcursor.js"></script>
+<script src="/vendor/codemirror-5.8/addon/search/search.js"></script>
 <script src="/vendor/codemirror-5.8/addon/edit/matchbrackets.js"></script>
 <script src="/vendor/codemirror-5.8/addon/edit/closebrackets.js"></script>
 <script src="/vendor/codemirror-5.8/addon/selection/active-line.js"></script>
