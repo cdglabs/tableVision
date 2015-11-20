@@ -37,7 +37,7 @@ def run(img):
     graph = topology.simplify_junctures(graph)
     log.hsvOrGreyImage(black,
         pixels=graph.nodes(),
-        # lines=graph.edges(),
+        points=topology.find_junctures(graph),
         graph=graph
     )
     
@@ -47,31 +47,39 @@ def run(img):
         lines=mygraph.edges(),
         graph=mygraph
     )
+    log.hsvOrGreyImage(black,
+        lines=graph.edges(),
+        points=topology.find_junctures(graph),
+        graph=graph
+    )
     
     graph = topology.simplify_paths(graph)
-    log.hsvOrGreyImage(black,
-        points=graph.nodes(),
-        lines=graph.edges()
-    )
-    
-    graph = topology.hv_lines(graph)
     log.hsvOrGreyImage(hsv,
         points=graph.nodes(),
         lines=graph.edges()
     )
     
-    graph = satisfaction.align(graph)
-    log.hsvOrGreyImage(hsv,
-        points=graph.nodes(),
-        lines=graph.edges()
-    )
+    # graph = topology.hv_lines(graph)
+    # log.hsvOrGreyImage(hsv,
+    #     points=graph.nodes(),
+    #     lines=graph.edges()
+    # )
+    # 
+    # graph = satisfaction.align(graph)
+    # log.hsvOrGreyImage(hsv,
+    #     points=graph.nodes(),
+    #     lines=graph.edges()
+    # )
     
     satisfaction.apply_same_length_constraint(graph)
-    
+    log.hsvOrGreyImage(hsv,
+        points=graph.nodes(),
+        lines=graph.edges()
+    )
     
     
     
 
 def sample():
-    return intake.image_file("input/photo004.png")
+    return intake.image_file("input/photo006.png")
     # return intake.image_file("input/photo003_colors.png")

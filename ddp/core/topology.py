@@ -20,6 +20,12 @@ A path is a list of nodes, each one connects to the next.
 import networkx as nx
 import math
 import numpy as np
+import core.util.vec as vec
+import itertools
+import core.util.fit as fit
+import core.util.stepping as stepping
+from Settings import Settings
+import operator
 
 # TODO: This should be moved to util or Settings, etc.
 import infrastructure.helper as helper
@@ -90,7 +96,7 @@ def find_clumps(graph, epsilon):
     for juncture in junctures:
         clump_graph.add_node(juncture)
     for (i, j) in itertools.combinations(junctures, 2):
-        if quadrance(i, j) < max_quadrance:
+        if vec.quadrance(i, j) < max_quadrance:
             clump_graph.add_edge(i, j)
     return nx.connected_components(clump_graph)
 
@@ -107,7 +113,9 @@ def get_path_color(graph, path):
 
     if len(color_occurrence) == 0:
         return helper.Colors.Black
-    return max(color_occurrence)
+    def find_key_with_max_value_in_dict(dict):
+        return max(dict.iteritems(), key=operator.itemgetter(1))[0]
+    return find_key_with_max_value_in_dict(color_occurrence)
 
 
 def find_same_length_constraints(graph):
@@ -126,7 +134,7 @@ def find_same_length_constraints(graph):
             print "found same length constraint!"
             constraint_junctions.append(last_node_p1)
             graph.node[last_node_p1]["constraint"] = "same_length"
-
+    
     mygraph = nx.Graph()
     for path in paths_from_t_junctures:
         path_color = get_path_color(graph, path)
@@ -149,19 +157,20 @@ def find_same_length_constraints(graph):
 
 
 
-def simplify_junctures(graph, epsilon=5):
+def simplify_junctures(graph):
     """Simplifies clumps by replacing them with a single juncture node. For
     each clump, any nodes within epsilon of the clump are deleted. Remaining
     nodes are connected back to the simplified junctures appropriately."""
     graph = graph.copy()
-    max_quadrance = epsilon * epsilon
-    clumps = find_clumps(graph, epsilon)
-
+    epsilon_px = Settings.STROKE_WIDTH_MM * Settings.PIXELS_PER_MM * Settings.SIMPLIFY_PATH_RADIUS_FACTOR_OF_STROKE_WIDTH
+    max_quadrance = epsilon_px * epsilon_px
+    clumps = find_clumps(graph, epsilon_px)
+    
     for clump in clumps:
         to_delete = set([])
         for node in graph.nodes_iter():
             for juncture in clump:
-                if quadrance(node, juncture) < max_quadrance:
+                if vec.quadrance(node, juncture) < max_quadrance:
                     to_delete.add(node)
 
         to_join = set([])
@@ -199,7 +208,7 @@ def find_paths_from_junctures(graph, junctures):
     # TODO: This should also find cyclical paths, that is circular paths which
     # are not connected to any junctures. Or perhaps there should be a
     # separate function for finding cyclical paths.
-
+    
     paths = []
     visited_nodes = set([])
 
@@ -225,7 +234,7 @@ def find_paths_from_junctures(graph, junctures):
     return paths
 
 
-def simplify_paths(graph, epsilon=3):
+def simplify_paths(graph):
     """Finds all paths and simplifies them using the RDP algorithm for
     reducing the number of points on a curve. All remaining nodes will be
     within epsilon of the original curve."""
@@ -235,23 +244,41 @@ def simplify_paths(graph, epsilon=3):
     # algorithm instead of RDP.
 
     # http://potrace.sourceforge.net/potrace.pdf
-
+    size_factor = 5
+    epsilon_px = Settings.STROKE_WIDTH_MM * Settings.PIXELS_PER_MM * Settings.SIMPLIFY_PATH_RADIUS_FACTOR_OF_STROKE_WIDTH * size_factor
+    
     graph = graph.copy()
     paths = find_paths(graph)
     for path in paths:
-        simplified_path = rdp(path, epsilon)
-        # Delete original path.
-        edge_attributes = {"same_length_strokes": 0}
+        # is an in-order subset of path!
+        simplified_path = fit.rdp(path, epsilon_px)
+        for node in simplified_path:
+            assert node in path
+        assert path[0] == simplified_path[0]
+        assert path[len(path)-1] == simplified_path[len(simplified_path)-1]
+        
+        # successive pairs: [1,2,3] -> [(1,2), (2,3)]
+        for (a, b) in stepping.pairwise(simplified_path):
+            edge_attributes = {"same_length_strokes": 0}
+            aidx = path.index(a)
+            bidx = path.index(b)
+            if bidx == 0:  # path is a loop
+                bidx = len(path)-1
+            assert aidx < bidx
+            # find number of same-length stroke-throughts cutting this segment
+            for i in range(aidx, bidx+1):
+                if "constraint" in graph.node[path[i]] and graph.node[path[i]]["constraint"] == "same_length":
+                    edge_attributes["same_length_strokes"] += 1
+                    print "added strokes", edge_attributes["same_length_strokes"]
+    
+            graph.add_edge(a, b, edge_attributes)
+        
+        # delete unnecessary nodes
         for index, node in enumerate(path):
-            if "constraint" in graph.node[node] and graph.node[node]["constraint"] == "same_length":
-                edge_attributes["same_length_strokes"] += 1
-                print "added strokes", edge_attributes["same_length_strokes"]
-
-            if index == 0 or index == len(path)-1:
+            if node in simplified_path:
                 continue
             graph.remove_node(node)
-        for (a, b) in pairwise(simplified_path):
-            graph.add_edge(a, b, edge_attributes)
+        
     return graph
 
 
@@ -319,9 +346,9 @@ def straighten_lines(graph, max_angle):
     for node in graph.nodes_iter():
         if nx.degree(graph, node) == 2:
             (p1, p2) = get_bridge_ends(graph, node)
-            a = math.sqrt(quadrance(p1, node))
-            b = math.sqrt(quadrance(p2, node))
-            c = math.sqrt(quadrance(p1, p2))
+            a = math.sqrt(vec.quadrance(p1, node))
+            b = math.sqrt(vec.quadrance(p2, node))
+            c = math.sqrt(vec.quadrance(p1, p2))
             if a + b == c:
                 to_delete.add(node)
                 continue

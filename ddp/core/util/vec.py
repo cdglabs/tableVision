@@ -30,7 +30,8 @@ def normalize((x,y)):
 
 def quadrance(p1, p2):
     """Distance-squared between two points."""
-    return length(sub(p2, p1))
+    dx, dy = sub(p2, p1)
+    return dx*dx + dy*dy
 
 
 def distance(p1, p2):
@@ -88,5 +89,5 @@ def is_horizontal(p1, p2):
     """Returns True if the line from p1 to p2 is more horizontal than it is
     vertical."""
     (dx, dy) = sub(p2, p1)
-    return dx > dy
+    return abs(dx) > abs(dy)
 

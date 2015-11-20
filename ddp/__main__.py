@@ -59,7 +59,7 @@ import traceback
 
 def run_once(module_to_run, options, frame, capture):
     module_to_run = reload(module_to_run)
-    if options.image_source == "webcamStream":
+    if options.image_source == "webcamStream" or options.image_source == "webcamStreamLocal":
         _, frame = capture.read()
     try:
         getattr(module_to_run, Settings.METHOD_NAME_TO_RUN)(frame)

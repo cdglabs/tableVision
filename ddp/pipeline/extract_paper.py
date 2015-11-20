@@ -5,7 +5,6 @@ import core.vision as vision
 import numpy as np
 import cv2
 
-
 def run(img, logOn=True):
     white_balanced_image = vision.white_balance(img)
     hsv = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2HSV)
@@ -24,4 +23,5 @@ def run(img, logOn=True):
 
 
 def sample():
-    return intake.image_file("input/grid_drawing.jpg")
+    return intake.image_file("input/photo005.png")
+    # return intake.image_file("input/grid_drawing.jpg")

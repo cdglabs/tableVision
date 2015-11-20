@@ -114,15 +114,15 @@ class Colors:
         assert inn(sat, 0, 256)
         assert inn(value, 0, 256)
         
-        if sat < 30 or value < 100:
+        if sat < 50 or value < 100:
             return Colors.Black
         
         # empirically determined
         if inn(hue, 0, 17) or inn(hue, 153, 180):
             return Colors.Red
-        if inn(hue, 17, 38):
+        if inn(hue, 17, 36):
             return Colors.Yellow
-        if inn(hue, 38, 84):
+        if inn(hue, 36, 84):
             return Colors.Green
         if inn(hue, 84, 115):
             return Colors.Blue_aqua

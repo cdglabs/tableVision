@@ -7,9 +7,9 @@ import math
 
 # returns a binary image where white is edge.
 def find_edges(hsv):
-    myGrey = convert_hsv_image_to_greyscale_emphasising_saturation(hsv)
+    myGrey = convert_hsv_image_to_greyscale_emphasising_saturation(hsv, sat_factor=4)
     binarized = cv2.adaptiveThreshold(
-        myGrey, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25, 3 )
+        myGrey, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 21, 2 )
     return binarized
 
 
@@ -61,8 +61,13 @@ def extract_paper(img, paper, is_upside_down = True):
     
     source = np.array(model_paper, np.float32)
     transformMatrix = cv2.getPerspectiveTransform(paper, source)
-    transformed = cv2.warpPerspective(img, transformMatrix, (w, h))
-    return transformed
+    # bug: warpPerspective does not work correctly with an hsv input image:
+    # red hues may not be warped correctly, adding strong color noise
+    # solved by converting to bgr and back
+    bgr = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+    transformed = cv2.warpPerspective(bgr, transformMatrix, (w, h))
+    transformed_hsv = cv2.cvtColor(transformed, cv2.COLOR_BGR2HSV)
+    return transformed_hsv
 
 
 def delete_margins_from_binary_image(binarized, margin_percent = 0.01):
@@ -168,11 +173,11 @@ def remove_noise_from_binary_image(binary_image):
     return binary_image
 
 
-def convert_hsv_image_to_greyscale_emphasising_saturation(hsv):
+def convert_hsv_image_to_greyscale_emphasising_saturation(hsv, sat_factor=2):
     # problem: normal cv2.COLOR_BGR2GRAY converts to a very light grey for, say, yellow strokes
     # grey = cv2.cvtColor(white_balanced_image, cv2.COLOR_BGR2GRAY)
     # convert to grey emphasising saturation!
-    hsv_factors = [0, -2, 1]
+    hsv_factors = [0, -sat_factor, 1]
     mat = np.array(hsv_factors).reshape((1,3))
     myGrey = cv2.transform(hsv, mat)
     return myGrey
