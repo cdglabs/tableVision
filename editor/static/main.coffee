@@ -202,6 +202,9 @@ R.create "SourceCode",
         indent = lineText.replace(/[^ ].*/, "").length
         imgEl.style.marginLeft = indent * 9 + "px"
         widget = @mirror.addLineWidget(lineNumber-1, imgEl)
+        # When image loads, need to tell the widget that we changed height.
+        imgEl.addEventListener "load", ->
+          widget.changed()
 
   onChange: ->
     sourceFile = @props.sourceFile

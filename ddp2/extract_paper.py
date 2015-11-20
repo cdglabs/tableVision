@@ -21,20 +21,21 @@ def find_paper(img):
     # Find paper contour.
     (contours, _) = cv2.findContours(
         img.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    boundingBoxes = map(
-        lambda contour: (contour, cv2.boundingRect(contour)), contours)
-    sortedC = sorted(
-        boundingBoxes, key=lambda (contour, (x, y, w, h)): w*h, reverse=True)
+    
+    def bounding_box_area(contour):
+        (x, y, w, h) = cv2.boundingRect(contour)
+        return w * h
+
+    sorted_contours = sorted(contours, key=bounding_box_area, reverse=True)
 
     # should be the first...
-    for (contour, bb) in sortedC:
+    for contour in sorted_contours:
         # approximate the contour
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
         # if our approximated contour has four points, then we
         # can assume that we have found our paper
         if len(approx) == 4:
-            print approx
             log.image_grey(img, log.contours([approx]))
             return approx
     
@@ -79,12 +80,9 @@ def white_balance(inimg, randomPoolSize = 100, selectionPoolSize = 20):
     
     
     
-def main():
+if __name__ == "__main__":
     img = cv2.imread("../input/curves.jpg")
     log.image(img)
     img = white_balance(img)
     paper_contour = find_paper(img)
     # img = white_balance(img)
-
-if __name__ == "__main__":
-    main()
